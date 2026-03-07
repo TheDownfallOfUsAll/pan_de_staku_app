@@ -1,74 +1,163 @@
-# 🧪 DoughBot Prompt Tests
-Pan de Staku Smart Bakery AI Assistant
+# DoughBot Prompt Tests
 
-This document shows sample test cases used to verify the responses of the DoughBot AI chatbot.
+This file contains prompt tests for smarter DoughBot behavior.
 
 ---
 
-# Test Case 1 — Greeting
+# Test Case 1 - Greeting
 
 ### User Input
 Hello
 
 ### Expected Output
-Bonjour! I'm DoughBot, your Pan de Staku bakery assistant. How can I help you today?
+One friendly greeting variant, for example:
+- "Bonjour! I am DoughBot. Looking for bread, coffee, or a combo today?"
+- "Welcome to Pan de Staku. I can suggest items, prices, and pairings."
+- "Hi! Ask me for recommendations, menu details, or order help."
 
 ---
 
-# Test Case 2 — Menu Inquiry
+# Test Case 2 - Full Menu
 
 ### User Input
-What breads do you sell?
+Show me your menu
 
 ### Expected Output
-You can check our menu on the left side of the app. We offer Croissant, Baguette, Brioche, and Pain au Chocolat.
+Returns a list of all menu items from `all_menu`.
 
 ---
 
-# Test Case 3 — Recommendation Request
+# Test Case 3 - Bread List
+
+### User Input
+What breads do you have?
+
+### Expected Output
+Returns bread-only items:
+- Croissant
+- Baguette
+- Brioche
+- Pain au Chocolat
+- Fougasse
+- Sourdough
+- Danish
+
+---
+
+# Test Case 4 - Coffee List
+
+### User Input
+What coffee do you serve?
+
+### Expected Output
+Returns coffee-only items from `coffee_menu`.
+
+---
+
+# Test Case 5 - Recommendation (Varied)
 
 ### User Input
 Can you recommend something?
 
 ### Expected Output
-I recommend our buttery Croissant paired with a Latte ☕.
+Returns one combo recommendation, such as:
+- Croissant with Latte
+- Brioche with Cappuccino
+- Pain au Chocolat with Mocha
+- Sourdough with Flat White
 
 ---
 
-# Test Case 4 — Coffee Pairing
+# Test Case 6 - Item Price
 
 ### User Input
-What coffee goes well with brioche?
+Price of brioche
 
 ### Expected Output
-Our Cappuccino pairs perfectly with Brioche.
+`Brioche is PHP 150.`
 
 ---
 
-# Test Case 5 — Delivery Question
+# Test Case 7 - Item Pairing
+
+### User Input
+What goes with croissant?
+
+### Expected Output
+`Croissant pairs well with Latte.`
+
+---
+
+# Test Case 8 - Delivery
 
 ### User Input
 Do you offer delivery?
 
 ### Expected Output
-Yes! We offer delivery within the city for ₱40.
+A delivery response with PHP 40 base fee.
 
 ---
 
-# Test Case 6 — Unknown Question
+# Test Case 9 - Payment Guidance
 
 ### User Input
-Who are you?
+How do I pay?
 
 ### Expected Output
-I'm DoughBot! Your Pan de Staku AI assistant. I can help you explore our menu, recommend items, and assist with orders.
+Mentions:
+- GCash and Maya
+- 11-digit mobile number
+- 6-digit OTP
 
 ---
 
-# Test Case 7 — Order Assistance
+# Test Case 10 - Branches
 
 ### User Input
-I want to order croissant
+What branches are available?
 
 ### Expected Output
-Great choice! You can add Croissant to your cart from the Order page.
+`Branches are available in Manila, Cebu, and Davao.`
+
+---
+
+# Test Case 11 - Order Steps
+
+### User Input
+How can I order?
+
+### Expected Output
+Mentions flow:
+1. Login
+2. Order page
+3. Add to cart
+4. Checkout in Cart
+
+---
+
+# Test Case 12 - Follow-up Context
+
+### User Input
+I want brioche  
+How much is it?
+
+### Expected Output
+Second prompt should use context (`it`) and return:
+`Brioche is PHP 150.`
+
+---
+
+# Test Case 13 - Unknown Prompt
+
+### User Input
+Tell me a joke about rockets
+
+### Expected Output
+Fallback guidance listing supported topics:
+- menu
+- prices
+- pairings
+- delivery
+- payment
+- branches
+- order steps

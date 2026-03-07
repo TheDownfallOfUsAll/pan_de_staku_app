@@ -1,4 +1,5 @@
 import hashlib
+import random
 import re
 import sqlite3
 from datetime import datetime
@@ -140,6 +141,8 @@ def init_session_state() -> None:
     st.session_state.setdefault("role", None)
     st.session_state.setdefault("branch", BRANCHES[0])
     st.session_state.setdefault("chat_messages", [])
+    st.session_state.setdefault("doughbot_last_item", None)
+    st.session_state.setdefault("doughbot_last_intent", None)
 
 
 def get_stock(conn: sqlite3.Connection, item: str) -> int:
@@ -161,25 +164,158 @@ def validate_payment(phone: str, otp: str) -> bool:
 
 def doughbot_response(prompt: str) -> str:
     p = prompt.lower()
-    if any(x in p for x in ["hi", "hello", "hey"]):
-        return "Bonjour! I am DoughBot, your Pan de Staku assistant."
-    if "menu" in p:
-        return "Our menu includes:\n\n" + ", ".join(all_menu.keys())
-    if "bread" in p:
-        return "Our breads:\n\n" + ", ".join(bread_menu.keys())
-    if "coffee" in p:
-        return "Coffee selection:\n\n" + ", ".join(coffee_menu.keys())
-    if "recommend" in p:
-        return "I recommend Croissant with Latte."
-    if "delivery" in p:
-        return "Delivery fee starts at PHP 40."
-    if "branch" in p:
+    words = set(re.findall(r"[a-z]+", p))
+
+    item_aliases = {
+        "croissant": "Croissant",
+        "baguette": "Baguette",
+        "brioche": "Brioche",
+        "pain au chocolat": "Pain au Chocolat",
+        "fougasse": "Fougasse",
+        "sourdough": "Sourdough",
+        "danish": "Danish",
+        "espresso": "Espresso",
+        "americano": "Americano",
+        "cappuccino": "Cappuccino",
+        "latte": "Latte",
+        "mocha": "Mocha",
+        "macchiato": "Macchiato",
+        "flat white": "Flat White",
+    }
+    pairings = {
+        "Croissant": "Latte",
+        "Baguette": "Americano",
+        "Brioche": "Cappuccino",
+        "Pain au Chocolat": "Mocha",
+        "Fougasse": "Espresso",
+        "Sourdough": "Flat White",
+        "Danish": "Macchiato",
+    }
+    greet_words = {"hi", "hello", "hey", "bonjour"}
+    thanks_words = {"thanks", "thank", "salamat"}
+    price_words = {"price", "cost", "how", "much"}
+    recommend_words = {"recommend", "suggest", "best"}
+    order_words = {"order", "buy", "checkout", "cart"}
+    delivery_words = {"delivery", "deliver", "ship"}
+    branch_words = {"branch", "location", "store"}
+    payment_words = {"payment", "gcash", "maya", "otp"}
+    hours_words = {"hours", "open", "close", "time"}
+
+    detected_item = None
+    for alias, canonical in item_aliases.items():
+        if alias in p:
+            detected_item = canonical
+            break
+    if not detected_item and st.session_state.get("doughbot_last_item"):
+        follow_up = {"it", "that", "this", "one"}
+        if words.intersection(follow_up):
+            detected_item = st.session_state.doughbot_last_item
+
+    if detected_item:
+        st.session_state.doughbot_last_item = detected_item
+
+    if words.intersection(greet_words):
+        st.session_state.doughbot_last_intent = "greeting"
+        return random.choice(
+            [
+                "Bonjour! I am DoughBot. Looking for bread, coffee, or a combo today?",
+                "Welcome to Pan de Staku. I can suggest items, prices, and pairings.",
+                "Hi! Ask me for recommendations, menu details, or order help.",
+            ]
+        )
+
+    if words.intersection(thanks_words):
+        st.session_state.doughbot_last_intent = "thanks"
+        return random.choice(
+            [
+                "You are welcome. Enjoy your order.",
+                "Happy to help. Let me know if you want another suggestion.",
+                "Anytime. I can also suggest a coffee pairing.",
+            ]
+        )
+
+    if "menu" in words:
+        st.session_state.doughbot_last_intent = "menu"
+        return "Full menu:\n\n" + ", ".join(all_menu.keys())
+
+    if "bread" in words or any(x in p for x in ["croissant", "baguette", "brioche", "sourdough"]):
+        if not detected_item:
+            st.session_state.doughbot_last_intent = "bread"
+            return "Our breads:\n\n" + ", ".join(bread_menu.keys())
+
+    if "coffee" in words or any(x in p for x in ["espresso", "latte", "americano", "cappuccino"]):
+        if not detected_item:
+            st.session_state.doughbot_last_intent = "coffee"
+            return "Coffee selection:\n\n" + ", ".join(coffee_menu.keys())
+
+    if words.intersection(recommend_words):
+        st.session_state.doughbot_last_intent = "recommend"
+        picks = [
+            "Croissant with Latte",
+            "Brioche with Cappuccino",
+            "Pain au Chocolat with Mocha",
+            "Sourdough with Flat White",
+        ]
+        return f"My recommendation: {random.choice(picks)}."
+
+    if detected_item and ("pair" in words or "with" in words or "goes" in words):
+        st.session_state.doughbot_last_intent = "pairing"
+        paired = pairings.get(detected_item)
+        if paired:
+            return f"{detected_item} pairs well with {paired}."
+
+    if detected_item and words.intersection(price_words):
+        st.session_state.doughbot_last_intent = "item_price"
+        price = all_menu.get(detected_item)
+        if price is not None:
+            return f"{detected_item} is PHP {price}."
+
+    if words.intersection(price_words):
+        st.session_state.doughbot_last_intent = "price_range"
+        min_price = min(all_menu.values())
+        max_price = max(all_menu.values())
+        return f"Prices range from PHP {min_price} to PHP {max_price}."
+
+    if words.intersection(delivery_words):
+        st.session_state.doughbot_last_intent = "delivery"
+        return random.choice(
+            [
+                "Delivery fee starts at PHP 40, depending on distance.",
+                "Yes, delivery is available. Base fee is PHP 40.",
+            ]
+        )
+
+    if words.intersection(branch_words):
+        st.session_state.doughbot_last_intent = "branch"
         return "Branches are available in Manila, Cebu, and Davao."
-    if "price" in p:
-        return "Prices range between PHP 90 and PHP 160."
-    if "order" in p:
-        return "Go to Order page, add items, then checkout in Cart."
-    return "Ask me about menu, coffee, bread, delivery, branches, or recommendations."
+
+    if words.intersection(payment_words):
+        st.session_state.doughbot_last_intent = "payment"
+        return "We accept GCash and Maya. Enter an 11-digit mobile number and 6-digit OTP."
+
+    if words.intersection(hours_words):
+        st.session_state.doughbot_last_intent = "hours"
+        return "Store hours are managed per branch. Choose a branch and check announcements for exact opening times."
+
+    if words.intersection(order_words):
+        st.session_state.doughbot_last_intent = "order"
+        return "To order: login, open Order page, add items to cart, then checkout in Cart."
+
+    if detected_item:
+        st.session_state.doughbot_last_intent = "item_info"
+        paired = pairings.get(detected_item, "a coffee of your choice")
+        price = all_menu.get(detected_item)
+        if price is not None:
+            return (
+                f"{detected_item} is available for PHP {price}. "
+                f"Popular pairing: {paired}."
+            )
+
+    st.session_state.doughbot_last_intent = "fallback"
+    return (
+        "I can help with menu, prices, pairings, delivery, payment, branches, and order steps. "
+        "Try: 'recommend a combo' or 'price of brioche'."
+    )
 
 
 st.set_page_config(page_title="Pan de Staku", page_icon="🥐", layout="wide")
