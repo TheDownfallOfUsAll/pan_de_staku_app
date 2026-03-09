@@ -376,6 +376,9 @@ menu = st.sidebar.radio(
         "Order",
         "Cart",
         "DoughBot Chat",
+        "Product",
+        "Service",
+        "Contact",
         "Admin Dashboard",
     ],
 )
@@ -383,10 +386,105 @@ menu = st.sidebar.radio(
 if menu == "Home":
     st.title("Pan de Staku")
     st.subheader("Enterprise French Bakery and Coffee Management System")
-    st.write(
-        "Welcome to Pan de Staku, a premium bakery platform with AI assistant, "
-        "multi-branch ordering, and digital payments."
+
+    st.markdown(
+        """
+Pan de Staku is a modern bakery and coffee concept built around a simple promise: deliver artisan-quality bread,
+carefully brewed coffee, and reliable digital service in one connected experience. The name represents a fusion of
+traditional baking roots and smart operations. "Pan" points to bread craftsmanship, while "Staku" reflects structured,
+technology-assisted business flow for daily bakery operations.
+
+At its core, Pan de Staku is both a customer-facing food brand and an internal management platform. For customers,
+it provides a consistent way to browse products, place orders, pay digitally, and receive support through an assistant.
+For the business team, it supports inventory visibility, branch-level control, and operational decision making through
+real sales and profit records.
+
+The long-term vision of Pan de Staku is to create a bakery ecosystem where quality and convenience are not separate.
+Each branch follows the same product standards and service approach while still serving local demand efficiently.
+From handcrafted croissants to classic espresso drinks, every menu item is positioned to maintain premium value,
+balanced pricing, and customer trust.
+
+Pan de Staku also emphasizes sustainability in operations: reducing waste through stock tracking, improving fulfillment
+accuracy through branch assignment, and enabling repeatable service standards through guided digital workflows. The goal
+is not only to sell bakery products, but to establish a dependable food-and-service system that can scale across cities
+without losing the feel of a neighborhood bakery.
+"""
     )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("Brand Definition")
+        st.write(
+            "Pan de Staku is an integrated bakery management model that combines artisan baking, specialty coffee, "
+            "and branch-based digital commerce into one operational platform."
+        )
+    with col2:
+        st.subheader("Why It Matters")
+        st.write(
+            "It improves customer convenience while giving the business better control over stock, sales, and service "
+            "quality across multiple locations."
+        )
+
+elif menu == "Product":
+    st.header("Products")
+    st.write(
+        "Our product line is designed for customers who want high-quality baked goods and coffee with predictable taste, "
+        "freshness, and value."
+    )
+
+    st.subheader("Signature Bread Collection")
+    for item, price in bread_menu.items():
+        st.write(f"- {item}: PHP {price}")
+
+    st.subheader("Coffee Program")
+    for item, price in coffee_menu.items():
+        st.write(f"- {item}: PHP {price}")
+
+    st.subheader("Product Direction")
+    st.write(
+        "Pan de Staku products focus on daily freshness, balanced flavor profiles, and curated bread-and-coffee pairings "
+        "to improve customer satisfaction and repeat purchases."
+    )
+
+elif menu == "Service":
+    st.header("Services")
+    st.write("Pan de Staku provides a complete service flow from product discovery to post-order assistance.")
+
+    st.markdown(
+        """
+- In-store and branch-based ordering for walk-in and local fulfillment.
+- Digital cart and checkout flow for fast order placement.
+- GCash and Maya payment support with verification flow.
+- Multi-branch coverage in Manila, Cebu, and Davao.
+- DoughBot support for menu guidance, pairings, prices, and ordering steps.
+- Inventory-aware ordering to reduce out-of-stock frustration.
+"""
+    )
+
+    st.subheader("Service Commitment")
+    st.write(
+        "We aim to deliver accurate orders, transparent pricing, and responsive customer support while continuously "
+        "improving branch-level performance."
+    )
+
+elif menu == "Contact":
+    st.header("Contact Us")
+    st.write("Reach Pan de Staku for orders, partnerships, branch concerns, or customer support.")
+
+    st.markdown(
+        """
+**Head Office Email:** support@pandestaku.com  
+**Customer Hotline:** +63 917 555 0123  
+**Business Hours:** Monday to Sunday, 7:00 AM - 9:00 PM  
+**Main Branches:** Manila, Cebu, Davao
+"""
+    )
+
+    st.subheader("Contact Channels")
+    st.write("- General Inquiries: support@pandestaku.com")
+    st.write("- Franchise and Partnerships: partnerships@pandestaku.com")
+    st.write("- Billing and Payments: billing@pandestaku.com")
+    st.write("- Branch Operations: operations@pandestaku.com")
 
 elif menu == "Login":
     st.header("Login")
