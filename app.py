@@ -140,6 +140,7 @@ def init_session_state() -> None:
     st.session_state.setdefault("user", None)
     st.session_state.setdefault("role", None)
     st.session_state.setdefault("branch", BRANCHES[0])
+    st.session_state.setdefault("appearance", "Light")
     st.session_state.setdefault("chat_messages", [])
     st.session_state.setdefault("doughbot_last_item", None)
     st.session_state.setdefault("doughbot_last_intent", None)
@@ -318,48 +319,119 @@ def doughbot_response(prompt: str) -> str:
     )
 
 
-st.set_page_config(page_title="Pan de Staku", page_icon="🥐", layout="wide")
-
-st.markdown(
-    """
-<style>
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.stApp {
-    animation: fadeIn 0.8s ease-in-out;
-    background:
-        radial-gradient(circle at 20% 20%, rgba(255,224,178,0.3), transparent 40%),
-        linear-gradient(135deg, #3E2723, #6D4C41, #D7A86E);
-}
-
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #3E2723, #5D4037, #8D6E63);
-}
-
-section[data-testid="stSidebar"] * {
-    color: white !important;
-}
-
-h1, h2, h3, .stTitle {
-    color: #FFF3E0;
-}
-
-p {
-    color: #FFE0B2;
-}
-</style>
-""",
-    unsafe_allow_html=True,
-)
+st.set_page_config(page_title="Pan de Staku", page_icon=":croissant:", layout="wide")
 
 conn = get_db_connection()
 init_db(conn)
 seed_default_admin(conn)
 seed_inventory(conn)
 init_session_state()
+
+appearance_choice = st.sidebar.radio(
+    "Appearance",
+    ["Light", "Dark"],
+    index=0 if st.session_state.appearance == "Light" else 1,
+    horizontal=True,
+)
+st.session_state.appearance = appearance_choice
+
+if st.session_state.appearance == "Dark":
+    app_background = (
+        "radial-gradient(circle at 12% 12%, rgba(201, 150, 90, 0.20), transparent 38%),"
+        "radial-gradient(circle at 86% 12%, rgba(143, 110, 99, 0.28), transparent 36%),"
+        "linear-gradient(150deg, #2f1f18 0%, #4e342e 44%, #8d6e63 73%, #c9965a 100%)"
+    )
+    sidebar_background = "linear-gradient(170deg, #2b1b15 0%, #4e342e 36%, #7a4e35 66%, #c9965a 100%)"
+    block_background = "linear-gradient(160deg, rgba(74, 50, 37, 0.78), rgba(40, 27, 21, 0.52))"
+    block_border = "rgba(222, 185, 135, 0.22)"
+    title_color = "#fff3e0"
+    text_color = "#f5dfc4"
+    nav_text_color = "#fff8ec"
+    nav_hover = "rgba(255, 248, 236, 0.18)"
+    nav_card = "rgba(255, 248, 236, 0.08)"
+else:
+    app_background = (
+        "radial-gradient(circle at 12% 14%, rgba(255, 248, 236, 0.92), transparent 40%),"
+        "radial-gradient(circle at 88% 10%, rgba(250, 224, 184, 0.45), transparent 38%),"
+        "linear-gradient(145deg, #fff8ec 0%, #f6e7ce 36%, #d9b078 63%, #c9965a 82%, #8a5a3b 100%)"
+    )
+    sidebar_background = "linear-gradient(165deg, #fff9ef 0%, #f1dec1 30%, #ddb785 58%, #c9965a 80%, #8a5a3b 100%)"
+    block_background = "linear-gradient(160deg, rgba(255, 250, 240, 0.74), rgba(255, 245, 228, 0.36))"
+    block_border = "rgba(124, 83, 57, 0.20)"
+    title_color = "#3a2618"
+    text_color = "#4b3324"
+    nav_text_color = "#16100b"
+    nav_hover = "rgba(78, 52, 46, 0.12)"
+    nav_card = "rgba(255, 248, 236, 0.34)"
+
+st.markdown(
+    f"""
+<style>
+@keyframes fadeIn {{
+    from {{ opacity: 0; transform: translateY(20px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+}}
+
+.stApp {{
+    animation: fadeIn 0.8s ease-in-out;
+    background: {app_background};
+    color: {text_color};
+}}
+
+section[data-testid="stSidebar"] {{
+    background: {sidebar_background};
+    border-right: 1px solid rgba(78, 52, 46, 0.35);
+}}
+
+section[data-testid="stSidebar"] * {{
+    color: {nav_text_color} !important;
+}}
+
+section[data-testid="stSidebar"] [data-baseweb="radio"] {{
+    background: {nav_card};
+    border: 1px solid rgba(255, 244, 227, 0.2);
+    border-radius: 12px;
+    padding: 8px 10px;
+}}
+
+section[data-testid="stSidebar"] [data-baseweb="radio"] label {{
+    margin-bottom: 2px;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}}
+
+section[data-testid="stSidebar"] [data-baseweb="radio"] label:hover {{
+    background: {nav_hover};
+    transform: translateX(2px);
+}}
+
+[data-testid="stHeader"] {{
+    background: transparent;
+}}
+
+[data-testid="stToolbar"] {{
+    right: 1rem;
+}}
+
+.block-container {{
+    background: {block_background};
+    border: 1px solid {block_border};
+    border-radius: 16px;
+    padding: 1.4rem 1.2rem;
+    backdrop-filter: blur(2px);
+}}
+
+h1, h2, h3, .stTitle {{
+    color: {title_color};
+}}
+
+p {{
+    color: {text_color};
+}}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 cart_count = sum(entry["qty"] for entry in st.session_state.cart)
 current_user = st.session_state.user or "Guest"
