@@ -163,7 +163,7 @@ def validate_payment(phone: str, otp: str) -> bool:
     return bool(re.fullmatch(r"\d{11}", phone) and re.fullmatch(r"\d{6}", otp))
 
 
-def doughbot_response(prompt: str) -> str:
+def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
     p = prompt.lower().strip()
     words = set(re.findall(r"[a-z]+", p))
 
@@ -207,21 +207,23 @@ def doughbot_response(prompt: str) -> str:
         ("Zack", "🤍"),
     ]
 
-    greet_words = {"hi", "hello", "hey", "bonjour", "goodmorning", "goodafternoon", "goodnight"}
-    thanks_words = {"thanks", "thank", "salamat"}
-    price_words = {"price", "cost", "how", "much"}
-    recommend_words = {"recommend", "suggest", "best"}
-    order_words = {"order", "buy", "checkout", "cart"}
-    delivery_words = {"delivery", "deliver", "ship"}
-    branch_words = {"branch", "location", "store"}
-    payment_words = {"payment", "gcash", "maya", "otp"}
-    hours_words = {"hours", "open", "close", "time"}
-    breakfast_words = {"breakfast", "morning"}
-    budget_words = {"cheap", "budget", "affordable", "lowest", "low", "pricey", "expensive"}
-    stock_words = {"stock", "available", "availability"}
-    compare_words = {"compare", "difference", "vs", "versus"}
-    help_words = {"help", "assist", "support"}
-    follow_up_words = {"it", "that", "this", "one"}
+    greet_words = {"hi", "hello", "hey", "bonjour", "goodmorning", "goodafternoon", "goodnight", "good", "morning", "evening", "greetings", "sup", "yo"}
+    thanks_words = {"thanks", "thank", "thankyou", "salamat", "appreciate", "grateful", "ty"}
+    price_words = {"price", "cost", "how", "much", "rate", "rates", "Php", "php"}
+    recommend_words = {"recommend", "suggest", "best", "suggestion", "recommendation", "what should", "what do you recommend", "got any", "any suggestion", "good"}
+    order_words = {"order", "buy", "checkout", "cart", "purchase", "get", "ordering", "place order", "shop"}
+    delivery_words = {"delivery", "deliver", "ship", "shipping", "delivered", "shipping fee"}
+    branch_words = {"branch", "location", "store", "branches", "where", "addresses"}
+    payment_words = {"payment", "gcash", "maya", "otp", "pay", "how to pay", "payment method", "mode of payment", "credit", "debit"}
+    hours_words = {"hours", "open", "close", "time", "operating", "schedule", "timing"}
+    breakfast_words = {"breakfast", "morning", "morning meal", "early", "sunrise", "dawn"}
+    budget_words = {"cheap", "budget", "affordable", "lowest", "low", "pricey", "expensive", "under", "less than", "below", "value", "deal", "promo", "discount"}
+    stock_words = {"stock", "available", "availability", "in stock", "out of stock", "do you have", "do you sell", "can i get", "left", "remaining"}
+    compare_words = {"compare", "difference", "vs", "versus", "or", "between", "better", "worse", "different"}
+    help_words = {"help", "assist", "support", "guide", "what can you do", "capabilities"}
+    follow_up_words = {"it", "that", "this", "one", "same", "these", "those"}
+    menu_words = {"menu", "list", "items", "products", "what do you sell", "sell", "offer", "catalogue"}
+    bye_words = {"bye", "goodbye", "see you", "later", "farewell", "take care", "cya", "peace"}
 
     def signed_reply(intent: str, message: str) -> str:
         st.session_state.doughbot_last_intent = intent
@@ -245,6 +247,15 @@ def doughbot_response(prompt: str) -> str:
             elif alias in text_lower:
                 requested[canonical] = requested.get(canonical, 0) + 1
         return requested
+
+    def get_stock_safe(item: str) -> int:
+        if conn is None:
+            return 50
+        try:
+            row = conn.execute("SELECT stock FROM inventory WHERE item = ?", (item,)).fetchone()
+            return int(row[0]) if row else 0
+        except:
+            return 50
 
     if not p:
         return signed_reply("fallback", "Ask me about menu items, prices, pairings, stock, or order steps.")
@@ -368,7 +379,7 @@ def doughbot_response(prompt: str) -> str:
         return signed_reply("pairing", f"{detected_item} pairs well with {paired}.")
 
     if detected_item and words.intersection(stock_words):
-        stock = get_stock(conn, detected_item)
+        stock = get_stock_safe(detected_item)
         if stock > 10:
             return signed_reply("stock", f"Yes, {detected_item} is available with healthy stock ({stock}).")
         if stock > 0:
@@ -422,7 +433,7 @@ def doughbot_response(prompt: str) -> str:
     if detected_item:
         paired = pairings.get(detected_item, "a coffee of your choice")
         price = all_menu.get(detected_item)
-        stock = get_stock(conn, detected_item)
+        stock = get_stock_safe(detected_item)
         if price is not None:
             stock_note = "in stock" if stock > 0 else "currently unavailable"
             return signed_reply(
@@ -834,7 +845,7 @@ elif menu == "DoughBot Chat":
         st.session_state.chat_messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
-        response = doughbot_response(prompt)
+        response = doughbot_response(prompt, conn)
         with st.chat_message("assistant"):
             st.write(response)
         st.session_state.chat_messages.append({"role": "assistant", "content": response})
