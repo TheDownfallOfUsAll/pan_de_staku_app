@@ -144,6 +144,8 @@ def init_session_state() -> None:
     st.session_state.setdefault("chat_messages", [])
     st.session_state.setdefault("doughbot_last_item", None)
     st.session_state.setdefault("doughbot_last_intent", None)
+    st.session_state.setdefault("doughbot_user_name", None)
+    st.session_state.setdefault("doughbot_last_topic", None)
 
 
 def get_stock(conn: sqlite3.Connection, item: str) -> int:
@@ -164,7 +166,8 @@ def validate_payment(phone: str, otp: str) -> bool:
 
 
 def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
-    p = prompt.lower().strip()
+    prompt_clean = " ".join(prompt.strip().split())
+    p = prompt_clean.lower()
     words = set(re.findall(r"[a-z]+", p))
 
     item_aliases = {
@@ -172,16 +175,21 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         "baguette": "Baguette",
         "brioche": "Brioche",
         "pain au chocolat": "Pain au Chocolat",
+        "pain au choc": "Pain au Chocolat",
+        "chocolate croissant": "Pain au Chocolat",
         "fougasse": "Fougasse",
         "sourdough": "Sourdough",
         "danish": "Danish",
         "espresso": "Espresso",
         "americano": "Americano",
         "cappuccino": "Cappuccino",
+        "capuccino": "Cappuccino",
         "latte": "Latte",
+        "cafe latte": "Latte",
         "mocha": "Mocha",
         "macchiato": "Macchiato",
         "flat white": "Flat White",
+        "flatwhite": "Flat White",
     }
     pairings = {
         "Croissant": "Latte",
@@ -193,60 +201,162 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         "Danish": "Macchiato",
     }
     personas = [
-        ("Aiah", "🩵"),
-        ("Colet", "💚"),
-        ("Maloi", "💛"),
-        ("Gwen", "🧡"),
-        ("Stacey", "🩷"),
-        ("Mikha", "❤️"),
-        ("Jhoanna", "💙"),
-        ("Sheena", "💜"),
-        ("Alex Gaskarth", "🤎"),
-        ("Jack Barakat", "🩶"),
-        ("Rian", "🖤"),
-        ("Zack", "🤍"),
+        ("Aiah", "<3"),
+        ("Colet", "<3"),
+        ("Maloi", "<3"),
+        ("Gwen", "<3"),
+        ("Stacey", "<3"),
+        ("Mikha", "<3"),
+        ("Jhoanna", "<3"),
+        ("Sheena", "<3"),
+        ("Alex Gaskarth", "<3"),
+        ("Jack Barakat", "<3"),
+        ("Rian", "<3"),
+        ("Zack", "<3"),
     ]
 
-    greet_words = {"hi", "hello", "hey", "bonjour", "goodmorning", "goodafternoon", "goodnight", "good", "morning", "evening", "greetings", "sup", "yo"}
-    thanks_words = {"thanks", "thank", "thankyou", "salamat", "appreciate", "grateful", "ty"}
-    price_words = {"price", "cost", "how", "much", "rate", "rates", "Php", "php"}
-    recommend_words = {"recommend", "suggest", "best", "suggestion", "recommendation", "what should", "what do you recommend", "got any", "any suggestion", "good"}
-    order_words = {"order", "buy", "checkout", "cart", "purchase", "get", "ordering", "place order", "shop"}
+    greet_words = {
+        "hi",
+        "hello",
+        "hey",
+        "bonjour",
+        "goodmorning",
+        "goodafternoon",
+        "goodnight",
+        "morning",
+        "evening",
+        "greetings",
+        "sup",
+        "yo",
+        "hiya",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    }
+    thanks_words = {"thanks", "thank", "thankyou", "salamat", "appreciate", "grateful", "ty", "thx"}
+    price_words = {"price", "cost", "rate", "rates", "php"}
+    recommend_words = {
+        "recommend",
+        "suggest",
+        "best",
+        "suggestion",
+        "recommendation",
+        "what should",
+        "what do you recommend",
+        "got any",
+        "any suggestion",
+    }
+    order_words = {"order", "buy", "checkout", "cart", "purchase", "ordering", "place order", "shop", "add to cart"}
     delivery_words = {"delivery", "deliver", "ship", "shipping", "delivered", "shipping fee"}
-    branch_words = {"branch", "location", "store", "branches", "where", "addresses"}
+    branch_words = {"branch", "location", "store", "branches", "addresses", "where are you", "where are you located", "where is your store"}
     payment_words = {"payment", "gcash", "maya", "otp", "pay", "how to pay", "payment method", "mode of payment", "credit", "debit"}
-    hours_words = {"hours", "open", "close", "time", "operating", "schedule", "timing"}
+    hours_words = {"hours", "open", "close", "operating", "schedule", "timing", "opening", "closing"}
     breakfast_words = {"breakfast", "morning", "morning meal", "early", "sunrise", "dawn"}
     budget_words = {"cheap", "budget", "affordable", "lowest", "low", "pricey", "expensive", "under", "less than", "below", "value", "deal", "promo", "discount"}
     stock_words = {"stock", "available", "availability", "in stock", "out of stock", "do you have", "do you sell", "can i get", "left", "remaining"}
-    compare_words = {"compare", "difference", "vs", "versus", "or", "between", "better", "worse", "different"}
+    compare_words = {"compare", "difference", "vs", "versus", "between", "better", "worse", "different"}
     help_words = {"help", "assist", "support", "guide", "what can you do", "capabilities"}
-    follow_up_words = {"it", "that", "this", "one", "same", "these", "those"}
+    follow_up_words = {"it", "that", "this", "one", "same", "these", "those", "them"}
     menu_words = {"menu", "list", "items", "products", "what do you sell", "sell", "offer", "catalogue"}
     bye_words = {"bye", "goodbye", "see you", "later", "farewell", "take care", "cya", "peace"}
+    smalltalk_phrases = {"how are you", "how's it going", "hows it going", "what's up", "whats up", "how do you feel"}
+    question_words = {"what", "why", "how", "when", "where", "who", "which", "can", "do", "does", "is", "are", "should", "could", "would", "will"}
+    positive_words = {"love", "great", "good", "amazing", "awesome", "nice", "cool", "perfect", "yay", "happy", "excited"}
+    negative_words = {"bad", "terrible", "awful", "hate", "worst", "sucks", "sad", "angry", "upset", "annoyed", "disappointed"}
+    hunger_words = {"hungry", "craving", "crave", "starving", "famished"}
+    sweet_words = {"sweet", "dessert", "chocolate", "sugary"}
+    savory_words = {"savory", "salty"}
+    caffeine_words = {"caffeine", "coffee", "energize", "energy", "awake", "wake", "sleepy"}
+    joke_words = {"joke", "funny", "laugh"}
+    complaint_words = {"complain", "complaint", "refund", "cancel", "wrong", "issue", "problem", "late", "cold", "stale"}
+    ingredient_words = {"ingredient", "ingredients", "allergen", "allergens", "gluten", "nuts", "nut", "dairy", "vegan", "vegetarian"}
+    custom_words = {"custom", "customize", "size", "sizes", "sugar", "milk", "decaf", "less sugar", "extra", "hot", "iced", "ice"}
+    order_status_words = {"order status", "track my order", "tracking", "where is my order"}
+    refund_words = {"refund", "cancel order", "return", "chargeback"}
+    name_reset_phrases = {"forget my name", "reset my name", "clear my name"}
 
     def signed_reply(intent: str, message: str) -> str:
         st.session_state.doughbot_last_intent = intent
+        st.session_state.doughbot_last_topic = intent
         persona_name, heart = random.choice(personas)
         return f"{message}\n\n{persona_name} {heart}"
+
+    def matches(candidates: set[str]) -> bool:
+        for cand in candidates:
+            if " " in cand:
+                if cand in p:
+                    return True
+            elif cand in words:
+                return True
+        return False
+
+    def extract_name(text: str) -> str | None:
+        patterns = [
+            r"\bmy name is\s+([A-Za-z][A-Za-z0-9_ -]{1,24})",
+            r"\bcall me\s+([A-Za-z][A-Za-z0-9_ -]{1,24})",
+            r"\bi am\s+([A-Za-z][A-Za-z0-9_ -]{1,24})",
+            r"\bi'm\s+([A-Za-z][A-Za-z0-9_ -]{1,24})",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+        return None
+
+    def alias_in_text(alias: str, text_lower: str) -> bool:
+        if " " in alias:
+            return alias in text_lower
+        return re.search(rf"\b{re.escape(alias)}s?\b", text_lower) is not None
 
     def detect_items(text_lower: str) -> list[str]:
         found = []
         for alias, canonical in item_aliases.items():
-            if alias in text_lower and canonical not in found:
+            if alias_in_text(alias, text_lower) and canonical not in found:
                 found.append(canonical)
         return found
 
-    def extract_item_qty(text_lower: str) -> dict[str, int]:
+    def extract_item_qty(text_lower: str) -> tuple[dict[str, int], bool]:
         requested: dict[str, int] = {}
+        explicit_qty = False
+        number_words = {
+            "a": 1,
+            "an": 1,
+            "one": 1,
+            "two": 2,
+            "three": 3,
+            "four": 4,
+            "five": 5,
+            "six": 6,
+            "seven": 7,
+            "eight": 8,
+            "nine": 9,
+            "ten": 10,
+        }
         for alias, canonical in item_aliases.items():
-            pattern = rf"(\d+)\s+{re.escape(alias)}"
-            match = re.search(pattern, text_lower)
-            if match:
-                requested[canonical] = requested.get(canonical, 0) + int(match.group(1))
-            elif alias in text_lower:
+            alias_pattern = re.escape(alias) + r"s?"
+            digit_patterns = [
+                rf"\b(\d+)\s*x?\s+{alias_pattern}\b",
+                rf"\b{alias_pattern}\s*x?\s*(\d+)\b",
+            ]
+            matched = False
+            for pattern in digit_patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    requested[canonical] = requested.get(canonical, 0) + int(match.group(1))
+                    explicit_qty = True
+                    matched = True
+                    break
+            if matched:
+                continue
+            for word, qty in number_words.items():
+                if re.search(rf"\b{word}\s+{alias_pattern}\b", text_lower):
+                    requested[canonical] = requested.get(canonical, 0) + qty
+                    explicit_qty = True
+                    matched = True
+                    break
+            if not matched and alias_in_text(alias, text_lower):
                 requested[canonical] = requested.get(canonical, 0) + 1
-        return requested
+        return requested, explicit_qty
 
     def get_stock_safe(item: str) -> int:
         if conn is None:
@@ -260,17 +370,28 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
     if not p:
         return signed_reply("fallback", "Ask me about menu items, prices, pairings, stock, or order steps.")
 
-    mentioned_items = detect_items(p)
-    detected_item = mentioned_items[0] if mentioned_items else None
+    if any(phrase in p for phrase in name_reset_phrases):
+        st.session_state.doughbot_user_name = None
+        return signed_reply("name", "Okay, I will forget your name. How can I help?")
 
-    if not detected_item and st.session_state.get("doughbot_last_item") and words.intersection(follow_up_words):
-        detected_item = st.session_state.doughbot_last_item
-        mentioned_items = [detected_item]
+    name = extract_name(prompt_clean)
+    if name:
+        st.session_state.doughbot_user_name = name
+        return signed_reply("name", f"Nice to meet you, {name}. How can I help today?")
 
-    if detected_item:
-        st.session_state.doughbot_last_item = detected_item
+    if "my" in words and "name" in words and ("what" in words or "remember" in words):
+        remembered = st.session_state.get("doughbot_user_name")
+        if remembered:
+            return signed_reply("name", f"Your name is {remembered}.")
+        return signed_reply("name", "I do not know your name yet. Tell me with 'my name is ...'.")
 
-    if words.intersection(greet_words):
+    if "your" in words and "name" in words:
+        return signed_reply("about", "I am DoughBot, your Pan de Staku assistant.")
+
+    if matches(bye_words):
+        return signed_reply("bye", "Thanks for chatting. Come back anytime for bread or coffee.")
+
+    if matches(greet_words):
         return signed_reply(
             "greeting",
             random.choice(
@@ -282,14 +403,20 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
             ),
         )
 
-    if words.intersection(help_words):
+    if any(phrase in p for phrase in smalltalk_phrases) or ("how" in words and "you" in words):
+        return signed_reply(
+            "smalltalk",
+            "I am doing well and ready to help. Want a recommendation, price check, or stock update?",
+        )
+
+    if matches(help_words):
         return signed_reply(
             "help",
             "I can help with menu, prices, stock checks, pairings, branch info, delivery, and checkout steps. "
             "Try: 'recommend breakfast under 250', 'compare latte vs cappuccino', or '2 croissant and 1 latte'.",
         )
 
-    if words.intersection(thanks_words):
+    if matches(thanks_words):
         return signed_reply(
             "thanks",
             random.choice(
@@ -307,12 +434,22 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
             "I am DoughBot, your Pan de Staku assistant for menu guidance, smart recommendations, and checkout support.",
         )
 
-    if "menu" in words or "list" in words:
+    if matches(menu_words):
         bread_list = ", ".join([f"{item} (PHP {price})" for item, price in bread_menu.items()])
         coffee_list = ", ".join([f"{item} (PHP {price})" for item, price in coffee_menu.items()])
         return signed_reply("menu", f"Bread:\n{bread_list}\n\nCoffee:\n{coffee_list}")
 
-    if words.intersection(compare_words) and len(mentioned_items) >= 2:
+    mentioned_items = detect_items(p)
+    detected_item = mentioned_items[0] if mentioned_items else None
+
+    if not detected_item and st.session_state.get("doughbot_last_item") and words.intersection(follow_up_words):
+        detected_item = st.session_state.doughbot_last_item
+        mentioned_items = [detected_item]
+
+    if detected_item:
+        st.session_state.doughbot_last_item = detected_item
+
+    if matches(compare_words) and len(mentioned_items) >= 2:
         a, b = mentioned_items[0], mentioned_items[1]
         pa, pb = all_menu[a], all_menu[b]
         diff = abs(pa - pb)
@@ -324,49 +461,77 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
             msg = f"{b} (PHP {pb}) is PHP {diff} more than {a} (PHP {pa})."
         return signed_reply("compare", msg)
 
-    if words.intersection(order_words):
-        requested = extract_item_qty(p)
-        if requested:
+    if matches(stock_words):
+        if mentioned_items:
             lines = []
-            total = 0
-            for item, qty in requested.items():
-                subtotal = all_menu[item] * qty
-                lines.append(f"- {item} x{qty}: PHP {subtotal}")
-                total += subtotal
-            return signed_reply(
-                "order_estimate",
-                "Estimated order total:\n"
-                + "\n".join(lines)
-                + f"\nTotal estimate: PHP {total}\n\nTo complete: login -> Order page -> add items -> Cart -> payment.",
-            )
-        return signed_reply("order", "To order: login, open Order page, add items to cart, then checkout in Cart.")
+            for item in mentioned_items:
+                stock = get_stock_safe(item)
+                if stock > 10:
+                    lines.append(f"- {item}: available ({stock})")
+                elif stock > 0:
+                    lines.append(f"- {item}: limited ({stock})")
+                else:
+                    lines.append(f"- {item}: out of stock")
+            return signed_reply("stock", "Stock update:\n" + "\n".join(lines))
+        return signed_reply("stock", "Which item should I check stock for?")
 
-    if "bread" in words and not detected_item:
-        bread_list = ", ".join([f"{item} (PHP {price})" for item, price in bread_menu.items()])
-        return signed_reply("bread", "Our breads:\n" + bread_list)
+    if matches(order_status_words):
+        return signed_reply("order_status", "Order tracking is handled in your account or with the branch. Share your order details and branch.")
 
-    if "coffee" in words and not detected_item:
-        coffee_list = ", ".join([f"{item} (PHP {price})" for item, price in coffee_menu.items()])
-        return signed_reply("coffee", "Coffee selection:\n" + coffee_list)
+    if matches(refund_words):
+        return signed_reply("refund", "For refunds or cancellations, please contact your branch with order details.")
 
-    if words.intersection(recommend_words) or words.intersection(breakfast_words):
+    requested, explicit_qty = extract_item_qty(p)
+    if requested and (matches(order_words) or explicit_qty or "total" in words or "estimate" in words):
+        lines = []
+        total = 0
+        for item, qty in requested.items():
+            subtotal = all_menu[item] * qty
+            lines.append(f"- {item} x{qty}: PHP {subtotal}")
+            total += subtotal
+        return signed_reply(
+            "order_estimate",
+            "Estimated order total:\n"
+            + "\n".join(lines)
+            + f"\nTotal estimate: PHP {total}\n\nTo complete: login -> Order page -> add items -> Cart -> payment.",
+        )
+
+    if matches(recommend_words) or matches(breakfast_words) or words.intersection(hunger_words) or words.intersection(caffeine_words):
         picks = [
             "Croissant with Latte",
             "Brioche with Cappuccino",
             "Pain au Chocolat with Mocha",
             "Sourdough with Flat White",
         ]
+        if words.intersection(sweet_words):
+            return signed_reply("recommend", "Sweet craving pick: Pain au Chocolat with Mocha.")
+        if words.intersection(savory_words):
+            return signed_reply("recommend", "Savory pick: Fougasse with Espresso.")
+        if words.intersection(caffeine_words):
+            return signed_reply("recommend", "Need energy? Espresso or Americano are strong, or try a Latte for balance.")
+        if matches(breakfast_words):
+            return signed_reply("recommend", "Breakfast pick: Croissant with Latte. It is balanced, light, and popular in the morning.")
         budget_picks = [pick for pick in picks if all_menu[pick.split(" with ")[0]] + all_menu[pick.split(" with ")[1]] <= 270]
-        if words.intersection(breakfast_words):
-            return signed_reply(
-                "recommend",
-                "Breakfast pick: Croissant with Latte. It is balanced, light, and very popular in the morning.",
-            )
-        if words.intersection(budget_words) and budget_picks:
+        if matches(budget_words) and budget_picks:
             return signed_reply("recommend", f"Budget-friendly combo: {random.choice(budget_picks)}.")
         return signed_reply("recommend", f"My recommendation: {random.choice(picks)}.")
 
-    if words.intersection(budget_words):
+    if matches(budget_words):
+        amounts = [int(n) for n in re.findall(r"\d+", p)]
+        budget = min(amounts) if amounts else None
+        if budget is not None:
+            combos = []
+            for bread, coffee in pairings.items():
+                total = all_menu[bread] + all_menu[coffee]
+                if total <= budget:
+                    combos.append(f"{bread} with {coffee} (PHP {total})")
+            singles = [f"{item} (PHP {price})" for item, price in all_menu.items() if price <= budget]
+            if combos:
+                return signed_reply("price", "Combos within budget:\n" + "\n".join(combos[:4]))
+            if singles:
+                return signed_reply("price", "Items within budget:\n" + ", ".join(singles[:6]))
+            cheapest_item = min(all_menu, key=all_menu.get)
+            return signed_reply("price", f"Cheapest item is {cheapest_item} at PHP {all_menu[cheapest_item]}.")
         sorted_items = sorted(all_menu.items(), key=lambda x: x[1])
         cheapest = ", ".join([f"{item} (PHP {price})" for item, price in sorted_items[:3]])
         premium = ", ".join([f"{item} (PHP {price})" for item, price in sorted_items[-3:]])
@@ -378,20 +543,13 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         paired = pairings.get(detected_item, "a coffee of your choice")
         return signed_reply("pairing", f"{detected_item} pairs well with {paired}.")
 
-    if detected_item and words.intersection(stock_words):
-        stock = get_stock_safe(detected_item)
-        if stock > 10:
-            return signed_reply("stock", f"Yes, {detected_item} is available with healthy stock ({stock}).")
-        if stock > 0:
-            return signed_reply("stock", f"{detected_item} is available, but limited stock ({stock}) remains.")
-        return signed_reply("stock", f"{detected_item} is currently out of stock.")
-
-    if detected_item and words.intersection(price_words):
+    how_much = "how much" in p
+    if detected_item and (matches(price_words) or how_much):
         price = all_menu.get(detected_item)
         if price is not None:
             return signed_reply("price", f"{detected_item} is PHP {price}.")
 
-    if words.intersection(price_words):
+    if matches(price_words) or how_much:
         min_item = min(all_menu, key=all_menu.get)
         max_item = max(all_menu, key=all_menu.get)
         return signed_reply(
@@ -399,7 +557,7 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
             f"Prices range from PHP {all_menu[min_item]} ({min_item}) to PHP {all_menu[max_item]} ({max_item}).",
         )
 
-    if words.intersection(delivery_words):
+    if matches(delivery_words):
         return signed_reply(
             "delivery",
             random.choice(
@@ -411,24 +569,39 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
             ),
         )
 
-    if words.intersection(branch_words):
+    if matches(branch_words):
         current_branch = st.session_state.get("branch", BRANCHES[0])
-        return signed_reply(
-            "branch",
-            f"Branches: Manila, Cebu, Davao. Your current selected branch is {current_branch}.",
-        )
+        return signed_reply("branch", f"Branches: Manila, Cebu, Davao. Your current selected branch is {current_branch}.")
 
-    if words.intersection(payment_words):
+    if matches(payment_words):
         return signed_reply(
             "payment",
             "We accept GCash and Maya. Provide an 11-digit mobile number and 6-digit OTP to confirm payment.",
         )
 
-    if words.intersection(hours_words):
+    if matches(hours_words):
         return signed_reply(
             "hours",
             "Store hours are managed per branch. Select your branch and check latest branch announcements.",
         )
+
+    if matches(ingredient_words):
+        return signed_reply(
+            "ingredients",
+            "For allergens or dietary needs, please check with staff or ingredient labels. Tell me the item and I can guide you.",
+        )
+
+    if matches(custom_words):
+        return signed_reply(
+            "custom",
+            "Some customizations are available depending on branch. Tell me your preference and I will note it.",
+        )
+
+    if matches(joke_words):
+        return signed_reply("smalltalk", "Bakery joke: Why did the baguette get promoted? It always rose to the occasion.")
+
+    if matches(complaint_words):
+        return signed_reply("support", "Sorry about the trouble. Tell me the branch, item, and what happened so I can help.")
 
     if detected_item:
         paired = pairings.get(detected_item, "a coffee of your choice")
@@ -441,13 +614,26 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
                 f"{detected_item} is PHP {price}, usually pairs with {paired}, and is {stock_note}.",
             )
 
+    if words.intersection(positive_words):
+        return signed_reply("smalltalk", "Glad to hear that. Want a matching bread and coffee combo?")
+
+    if words.intersection(negative_words):
+        return signed_reply("smalltalk", "Sorry you are feeling that way. Want a comfort pick?")
+
+    if "?" in prompt_clean or words.intersection(question_words):
+        return signed_reply(
+            "fallback",
+            "Good question. I focus on Pan de Staku menu, prices, and ordering help. "
+            "If you want that, tell me the item, mood, or budget.",
+        )
+
+    short_echo = prompt_clean if len(prompt_clean) <= 140 else prompt_clean[:137] + "..."
     return signed_reply(
         "fallback",
+        f"Thanks for sharing: \"{short_echo}\". "
         "I can help with menu, prices, pairings, stock checks, delivery, payment, branches, and order estimates. "
         "Try: 'recommend breakfast', 'compare latte vs cappuccino', or 'is brioche available?'.",
     )
-
-
 st.set_page_config(page_title="Pan de Staku", page_icon=":croissant:", layout="wide")
 
 conn = get_db_connection()
@@ -874,3 +1060,6 @@ elif menu == "Admin Dashboard":
 
         st.subheader("Inventory")
         st.dataframe(df_inventory, use_container_width=True)
+
+
+
