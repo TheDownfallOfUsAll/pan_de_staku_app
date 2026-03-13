@@ -736,7 +736,8 @@ st.markdown(
 
 section[data-testid="stSidebar"] {{
     background: {sidebar_background};
-    border-right: 1px solid rgba(78, 52, 46, 0.35);
+    border-right: none;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.18);
 }}
 
 section[data-testid="stSidebar"] * {{
@@ -745,20 +746,40 @@ section[data-testid="stSidebar"] * {{
 
 section[data-testid="stSidebar"] [data-baseweb="radio"] {{
     background: {nav_card};
-    border: 1px solid rgba(255, 244, 227, 0.2);
+    border: none;
     border-radius: 12px;
-    padding: 8px 10px;
+    padding: 10px 12px;
+    box-shadow: none;
 }}
 
 section[data-testid="stSidebar"] [data-baseweb="radio"] label {{
-    margin-bottom: 2px;
-    border-radius: 8px;
-    transition: background 0.2s ease, transform 0.2s ease;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    padding: 6px 10px;
+    border-left: 3px solid transparent;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
 }}
 
 section[data-testid="stSidebar"] [data-baseweb="radio"] label:hover {{
     background: {nav_hover};
     transform: translateX(2px);
+}}
+
+section[data-testid="stSidebar"] [data-baseweb="radio"] label[data-checked="true"],
+section[data-testid="stSidebar"] [data-baseweb="radio"] label:has(input:checked),
+section[data-testid="stSidebar"] [data-baseweb="radio"] input:checked + div {{
+    background: rgba(255, 244, 231, 0.20);
+    border-left-color: rgba(255, 244, 231, 0.7);
+    font-weight: 600;
+}}
+
+section[data-testid="stSidebar"] .stRadio > label {{
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
 }}
 
 [data-testid="stHeader"] {{
