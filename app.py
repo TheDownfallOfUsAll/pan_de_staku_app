@@ -146,6 +146,7 @@ def init_session_state() -> None:
     st.session_state.setdefault("doughbot_last_intent", None)
     st.session_state.setdefault("doughbot_user_name", None)
     st.session_state.setdefault("doughbot_last_topic", None)
+    st.session_state.setdefault("doughbot_last_response", None)
 
 
 def get_stock(conn: sqlite3.Connection, item: str) -> int:
@@ -279,7 +280,17 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         st.session_state.doughbot_last_intent = intent
         st.session_state.doughbot_last_topic = intent
         persona_name, heart = random.choice(personas)
-        return f"{message}\n\n{persona_name} {heart}"
+        response = f"{message}\n\n{persona_name} {heart}"
+        last = st.session_state.get("doughbot_last_response")
+        if last == response:
+            followups = [
+                "Want a different suggestion?",
+                "I can tailor that by budget or taste.",
+                "Tell me your mood and I will personalize it.",
+            ]
+            response = f"{message}\n\n{random.choice(followups)}\n\n{persona_name} {heart}"
+        st.session_state.doughbot_last_response = response
+        return response
 
     def matches(candidates: set[str]) -> bool:
         for cand in candidates:

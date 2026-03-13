@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import time
 import random
+import re
 
 st.set_page_config(
     page_title="Pan de Staku AI",
@@ -47,6 +48,64 @@ border-radius:12px;
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown(
+    """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+:root {
+  --bg-dark: #2a1a14;
+  --bg-mid: #6a4a3c;
+  --bg-light: #d7b07d;
+  --cream: #f6efe6;
+  --accent: #f2c97d;
+  --card: rgba(255, 248, 236, 0.10);
+  --card-strong: rgba(255, 248, 236, 0.16);
+  --border: rgba(255, 248, 236, 0.18);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.stApp {
+  color: var(--cream);
+  font-family: "Space Grotesk", sans-serif;
+}
+
+h1, h2, h3, p, li {
+  color: var(--cream);
+}
+
+h1, h2, h3 {
+  font-family: "Fraunces", serif;
+  letter-spacing: 0.5px;
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-card, .menu-card, .recipe-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  animation: riseIn 0.5s ease;
+}
+
+.menu-card {
+  background: var(--card-strong);
+}
+
+.stChatMessage {
+  border-radius: 14px;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 # ------------------------------------------------
 # CHATBOT NAME
 # ------------------------------------------------
@@ -65,6 +124,16 @@ menu_items = {
     "☕ Cappuccino":120
 }
 
+menu_items.update({
+    "Fougasse": 130,
+    "Sourdough": 160,
+    "Danish": 135,
+    "Americano": 100,
+    "Mocha": 140,
+    "Macchiato": 115,
+    "Flat White": 125,
+})
+
 # ------------------------------------------------
 # SESSION STATE
 # ------------------------------------------------
@@ -74,9 +143,16 @@ if "messages" not in st.session_state:
 if "conversation_context" not in st.session_state:
     st.session_state.conversation_context = {}
 
+if "last_response" not in st.session_state:
+    st.session_state.last_response = None
+
+if "pending_recipe_prompt" not in st.session_state:
+    st.session_state.pending_recipe_prompt = None
+
 # ------------------------------------------------
 # HEADER
 # ------------------------------------------------
+st.markdown("Tip: Try asking `Give me a recipe for chicken, garlic, onion`.")
 st.title("🥐 Pan de Staku Smart Bakery")
 st.subheader("AI Powered Bakery Assistant")
 
@@ -101,11 +177,13 @@ col1, col2 = st.columns([1,1.2])
 # ------------------------------------------------
 with col1:
 
+    st.markdown('<div class="menu-card">', unsafe_allow_html=True)
     st.markdown("### 📋 Bakery Menu")
 
     df = pd.DataFrame(menu_items.items(), columns=["Item","Price"])
     df["Price"] = df["Price"].apply(lambda x: f"₱{x}")
 
+    df["Price"] = df["Price"].apply(lambda x: f"PHP {x}")
     st.dataframe(df, use_container_width=True)
 
     st.markdown("### ⭐ Popular Combo")
@@ -114,6 +192,14 @@ with col1:
 🥐 Croissant + ☕ Latte  
 Perfect buttery breakfast combo.
 """)
+
+    st.markdown("### Recipe Helper")
+    ingredients_input = st.text_input("Ingredients or dish name", key="ingredients_input")
+    if st.button("Generate Recipe"):
+        if ingredients_input.strip():
+            st.session_state.pending_recipe_prompt = f"Give me a recipe for {ingredients_input.strip()}."
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ------------------------------------------------
 # DOUGHBOT AI ENGINE
@@ -201,11 +287,232 @@ Try asking me things like:
 • "What coffee goes with croissant?"
 """
 
+def _primary_doughbot_ai(prompt):
+    text = prompt.lower().strip()
+
+    greetings = ["hello", "hi", "hey", "good morning", "good evening", "good afternoon"]
+    thanks = ["thanks", "thank you", "appreciate", "ty"]
+    recommend = ["recommend", "suggest", "best", "favorite", "fave"]
+    coffee = ["coffee", "espresso", "latte", "cappuccino", "americano", "mocha", "macchiato", "flat white"]
+    bread = ["bread", "croissant", "baguette", "brioche", "sourdough", "danish", "fougasse"]
+    delivery = ["delivery", "deliver", "shipping"]
+    price = ["price", "cost", "how much", "rates"]
+
+    combos = [
+        ("Croissant", "Latte"),
+        ("Brioche", "Cappuccino"),
+        ("Pain au Chocolat", "Mocha"),
+        ("Sourdough", "Flat White"),
+    ]
+    combo = random.choice(combos)
+    menu_list = ", ".join(menu_items.keys())
+    price_min = min(menu_items.values())
+    price_max = max(menu_items.values())
+
+    if any(x in text for x in greetings):
+        return [
+            "Hello! I'm DoughBot. Want bread, coffee, or a combo today?",
+            "Hi there. I can recommend items or answer menu questions.",
+            "Welcome to Pan de Staku. What are you in the mood for?",
+        ]
+
+    if any(x in text for x in recommend):
+        return [
+            f"My pick: {combo[0]} with {combo[1]}. Balanced and popular.",
+            f"Try {combo[0]} + {combo[1]}. Great for mornings.",
+            "If you want something rich, go Brioche with Cappuccino.",
+            "For a lighter start, Croissant with Latte is a solid choice.",
+        ]
+
+    if any(x in text for x in coffee):
+        return [
+            "Coffee options: Espresso, Americano, Cappuccino, Latte, Mocha, Macchiato, Flat White.",
+            "Want something strong? Espresso or Americano. Prefer smooth? Latte or Flat White.",
+            "Cappuccino pairs nicely with Brioche. Mocha pairs well with Pain au Chocolat.",
+        ]
+
+    if any(x in text for x in bread):
+        return [
+            "Breads: Croissant, Baguette, Brioche, Pain au Chocolat, Fougasse, Sourdough, Danish.",
+            "Looking for a classic? Croissant and Baguette are favorites.",
+            "If you want something hearty, Sourdough is a great pick.",
+        ]
+
+    if any(x in text for x in price):
+        return [
+            f"Our items range between PHP {price_min} and PHP {price_max}.",
+            "Tell me the item and I can give the exact price.",
+        ]
+
+    if any(x in text for x in delivery):
+        return [
+            "Yes, delivery is available. Fees depend on distance.",
+            "We can deliver locally. Share your area and I will estimate.",
+        ]
+
+    if any(x in text for x in thanks):
+        return [
+            "You're welcome. Want another suggestion?",
+            "Happy to help. Ask me anytime.",
+            "Anytime. I can recommend a combo if you want.",
+        ]
+
+    if "menu" in text:
+        return [
+            f"Our menu includes: {menu_list}.",
+            "We serve artisan breads and coffee. Ask about any item.",
+        ]
+
+    return [
+        "Tell me what you are craving and I will suggest a combo.",
+        "Ask about menu items, prices, or pairings, and I will help.",
+        "If you want a recipe, say: Give me a recipe for chicken, garlic, onion.",
+    ]
+
+
+def _parse_ingredients(text: str) -> list[str]:
+    parts = re.split(r"[,\n;]+", text)
+    return [p.strip() for p in parts if p.strip()]
+
+
+def _generate_recipe(query: str) -> str:
+    ingredients = _parse_ingredients(query)
+    if not ingredients:
+        return "Tell me the ingredients or dish name and I will build a recipe."
+    style_titles = ["Skillet", "Saute", "One-Pan", "Quick Bowl"]
+    flavor_tips = [
+        "Add a squeeze of citrus for brightness.",
+        "Finish with fresh herbs if you have them.",
+        "A splash of broth makes it richer.",
+        "A little butter at the end makes it silky.",
+    ]
+    if len(ingredients) == 1:
+        dish = ingredients[0].title()
+        tip = random.choice(flavor_tips)
+        steps = [
+            "Prep and season the main ingredient.",
+            "Warm oil in a pan over medium heat.",
+            "Cook until browned, then reduce heat and finish gently.",
+            "Taste and adjust seasoning.",
+            "Serve hot with a simple side.",
+        ]
+        step_lines = "\n".join([f"{idx}. {step}" for idx, step in enumerate(steps, start=1)])
+        return f"""Recipe idea: {dish}
+
+Ingredients:
+- {dish}
+- salt
+- pepper
+- oil
+
+Steps:
+{step_lines}
+
+Tip: {tip}"""
+
+    title = ingredients[0].title()
+    pantry = ["salt", "pepper", "oil"]
+    ingredient_lines = "\n".join([f"- {item}" for item in ingredients + pantry])
+    steps = [
+        "Prep and chop all ingredients.",
+        "Warm oil in a pan and cook aromatics first.",
+        "Add the main ingredients and cook until tender.",
+        "Season, stir, and let flavors combine for a few minutes.",
+        "Taste, adjust, and serve hot.",
+    ]
+    if random.choice([True, False]):
+        steps = [
+            "Prep and portion ingredients.",
+            "Sear the main ingredients for color.",
+            "Add the rest and cook until fragrant.",
+            "Lower heat and let flavors meld.",
+            "Finish and serve.",
+        ]
+    step_lines = "\n".join([f"{idx}. {step}" for idx, step in enumerate(steps, start=1)])
+    style = random.choice(style_titles)
+    tip = random.choice(flavor_tips)
+    return f"""Recipe: Simple {title} {style}
+
+Ingredients:
+{ingredient_lines}
+
+Steps:
+{step_lines}
+
+Tip: {tip}"""
+
+
+def _avoid_repeat(response) -> str:
+    last = st.session_state.get("last_response")
+    if isinstance(response, list):
+        choices = response[:]
+        if last in choices and len(choices) > 1:
+            choices = [item for item in choices if item != last]
+        response = random.choice(choices)
+    if last and response == last:
+        followups = [
+            "Want a faster version or a baked version instead?",
+            "Tell me your dietary preference and I will adapt it.",
+            "If you want a different flavor, give me 2 to 3 ingredients.",
+        ]
+        response = response + "\n\n" + random.choice(followups)
+    st.session_state.last_response = response
+    return response
+
+
+def _recipe_query(text: str) -> str | None:
+    match = re.search(r"recipe\s+(?:for|with)\s+(.+)", text)
+    if match:
+        return match.group(1).strip(" .")
+    if "ingredients:" in text:
+        return text.split("ingredients:", 1)[1].strip()
+    if "recipe" in text:
+        cleaned = text.replace("recipe", "").strip(" .")
+        return cleaned if cleaned else None
+    return None
+
+
+_base_doughbot_ai = _primary_doughbot_ai
+
+
+def doughbot_ai(prompt):
+    text = prompt.lower().strip()
+    recipe_query = _recipe_query(text)
+    if recipe_query:
+        return _avoid_repeat(_generate_recipe(recipe_query))
+    if "recipe" in text and not recipe_query:
+        return _avoid_repeat(
+            [
+                "Tell me the ingredients or dish name and I will build a recipe.",
+                "Share ingredients or a dish name and I will create a recipe.",
+                "Give me ingredients and I will make a quick recipe.",
+            ]
+        )
+    if "menu" in text or "list" in text:
+        items = ", ".join(menu_items.keys())
+        return _avoid_repeat(
+            [
+                f"Our menu includes: {items}.",
+                "We serve artisan breads and coffee. Ask about any item.",
+            ]
+        )
+    response = _base_doughbot_ai(prompt)
+    return _avoid_repeat(response)
+
+
+if st.session_state.pending_recipe_prompt:
+    prompt_text = st.session_state.pending_recipe_prompt
+    st.session_state.pending_recipe_prompt = None
+    st.session_state.messages.append({"role": "user", "content": prompt_text})
+    recipe_response = doughbot_ai(prompt_text)
+    st.session_state.messages.append({"role": "assistant", "content": recipe_response})
+
 # ------------------------------------------------
 # CHAT UI
 # ------------------------------------------------
 with col2:
 
+    st.markdown('<div class="chat-card">', unsafe_allow_html=True)
     st.markdown(f"### 🤖 Chat with {CHATBOT_NAME}")
 
     for msg in st.session_state.messages:
@@ -237,3 +544,5 @@ with col2:
             "role":"assistant",
             "content":response
         })
+
+    st.markdown("</div>", unsafe_allow_html=True)
