@@ -110,6 +110,8 @@ h1, h2, h3 {
 # CHATBOT NAME
 # ------------------------------------------------
 CHATBOT_NAME = "DoughBot"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
 
 # ------------------------------------------------
 # MENU DATA
@@ -149,9 +151,36 @@ if "last_response" not in st.session_state:
 if "pending_recipe_prompt" not in st.session_state:
     st.session_state.pending_recipe_prompt = None
 
+if "admin_logged_in" not in st.session_state:
+    st.session_state.admin_logged_in = False
+
 # ------------------------------------------------
 # HEADER
 # ------------------------------------------------
+with st.sidebar:
+    st.subheader("Admin Login")
+    if st.session_state.admin_logged_in:
+        st.success("Logged in as admin.")
+        if st.button("Logout Admin"):
+            st.session_state.admin_logged_in = False
+    else:
+        admin_user = st.text_input("Admin Username", key="admin_user")
+        admin_pass = st.text_input("Admin Password", type="password", key="admin_pass")
+        if st.button("Login as Admin"):
+            if admin_user == ADMIN_USERNAME and admin_pass == ADMIN_PASSWORD:
+                st.session_state.admin_logged_in = True
+                st.success("Admin login successful.")
+            else:
+                st.error("Invalid admin credentials.")
+
+    if st.session_state.admin_logged_in:
+        st.markdown("### Admin Panel")
+        st.caption("Quick monitoring snapshot")
+        st.metric("Chat Messages", len(st.session_state.messages))
+        if st.button("Clear Chat History"):
+            st.session_state.messages = []
+            st.success("Chat history cleared.")
+
 st.markdown("Tip: Try asking `Give me a recipe for chicken, garlic, onion`.")
 st.title("🥐 Pan de Staku Smart Bakery")
 st.subheader("AI Powered Bakery Assistant")
