@@ -147,7 +147,16 @@ def authenticate_user(conn: sqlite3.Connection, username: str, password: str):
     if not row:
         return None
     db_username, db_role, db_hash = row
-    if db_hash == hash_password(password):
+    incoming_hash = hash_password(password)
+    if db_hash == incoming_hash:
+        return {"username": db_username, "role": db_role}
+    if db_hash == password:
+        # Migrate legacy plain-text passwords to hashed storage.
+        cursor.execute(
+            "UPDATE users SET password = ? WHERE username = ?",
+            (incoming_hash, db_username),
+        )
+        conn.commit()
         return {"username": db_username, "role": db_role}
     return None
 
