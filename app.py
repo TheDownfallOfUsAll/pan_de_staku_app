@@ -53,6 +53,21 @@ drinks_menu = {
 
 all_menu = {**bread_menu, **local_bakes_menu, **coffee_menu, **drinks_menu}
 
+NAV_DEFINITIONS = {
+    "Home": "Brand overview, highlights, and vision.",
+    "Login": "Sign in to place orders and access your account.",
+    "Register": "Create a new customer account.",
+    "Branch": "Choose your branch and view local details.",
+    "Menu List": "Full menu with updated prices.",
+    "Order": "Build multi-item orders and add to cart.",
+    "Cart": "Review items and complete payment.",
+    "DoughBot Chat": "Chat support for menu, prices, and recommendations.",
+    "Product": "Product lineup and pricing.",
+    "Service": "Service flow, payment, and support commitments.",
+    "Contact": "Reach the team for help or partnerships.",
+    "Admin Dashboard": "Admin-only sales and inventory monitoring.",
+}
+
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
@@ -844,6 +859,22 @@ section[data-testid="stSidebar"] {{
 
 section[data-testid="stSidebar"] * {{
     color: {nav_text_color} !important;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+}}
+
+.sidebar-brand {{
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.2rem;
+}}
+
+.sidebar-tag {{
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    margin-bottom: 0.9rem;
 }}
 
 section[data-testid="stSidebar"] [data-baseweb="radio"] {{
@@ -1123,6 +1154,233 @@ p, li, label, span, div {{
     background: var(--accent-soft);
     font-weight: 600;
 }}
+
+.order-card {{
+    border-radius: 22px;
+    padding: 1.6rem 1.8rem;
+    border: 1px solid {block_border};
+    background: linear-gradient(135deg, rgba(255, 250, 240, 0.18), rgba(255, 255, 255, 0.04));
+    box-shadow: 0 18px 40px var(--shadow);
+    margin-bottom: 1.2rem;
+}}
+
+.order-title {{
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: {title_color};
+    font-family: 'Fraunces', 'Times New Roman', serif;
+}}
+
+.order-subtitle {{
+    font-size: 0.95rem;
+    opacity: 0.95;
+    max-width: 620px;
+}}
+
+.order-badges {{
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 0.9rem;
+}}
+
+.order-badge {{
+    background: var(--accent-soft);
+    color: {title_color};
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    border: 1px solid {block_border};
+}}
+
+.order-panel {{
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid {block_border};
+    border-radius: 18px;
+    padding: 1.2rem 1.3rem;
+    box-shadow: 0 14px 32px var(--shadow);
+}}
+
+.nav-guide {{
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid {block_border};
+    border-radius: 14px;
+    padding: 0.8rem 0.9rem;
+    margin-top: 0.8rem;
+}}
+
+.nav-guide-title {{
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}}
+
+.nav-guide-text {{
+    font-size: 0.85rem;
+}}
+
+.nav-all {{
+    margin-top: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid {block_border};
+    background: rgba(255, 255, 255, 0.06);
+    max-height: 220px;
+    overflow-y: auto;
+}}
+
+.nav-all-item {{
+    font-size: 0.78rem;
+    line-height: 1.35;
+    margin-bottom: 0.45rem;
+}}
+
+.nav-all-item b {{
+    color: {title_color};
+}}
+
+.top-nav {{
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 18px;
+    border: 1px solid {block_border};
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04));
+    box-shadow: 0 16px 34px var(--shadow);
+}}
+
+.top-nav [data-baseweb="radio"] {{
+    background: transparent;
+    border: none;
+    padding: 0;
+}}
+
+.top-nav [data-baseweb="radio"] > div {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}}
+
+.top-nav [data-baseweb="radio"] label {{
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid {block_border};
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-weight: 600;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}}
+
+.top-nav [data-baseweb="radio"] label:hover {{
+    transform: translateY(-1px);
+    border-color: var(--accent);
+}}
+
+.top-nav [data-baseweb="radio"] label[data-checked="true"],
+.top-nav [data-baseweb="radio"] label:has(input:checked),
+.top-nav [data-baseweb="radio"] input:checked + div {{
+    background: var(--accent-soft);
+    border-color: var(--accent);
+}}
+
+.page-definition {{
+    border-radius: 18px;
+    padding: 1rem 1.2rem;
+    border: 1px solid {block_border};
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+    box-shadow: 0 14px 30px var(--shadow);
+    margin-bottom: 1rem;
+}}
+
+.page-definition-title {{
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--accent);
+    font-weight: 700;
+}}
+
+.page-definition-text {{
+    font-size: 0.95rem;
+    margin-top: 0.3rem;
+}}
+
+div[data-baseweb="select"] > div {{
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid {block_border};
+    border-radius: 999px;
+    box-shadow: 0 10px 24px var(--shadow);
+}}
+
+div[data-baseweb="select"] > div:hover {{
+    border-color: var(--accent);
+}}
+
+div[data-baseweb="select"] svg {{
+    color: var(--accent);
+}}
+
+.branch-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 1rem;
+}}
+
+.branch-card {{
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid {block_border};
+    border-radius: 16px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 12px 30px var(--shadow);
+}}
+
+.branch-card.selected {{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset, 0 18px 36px var(--shadow);
+}}
+
+.branch-title {{
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.2rem;
+    margin-bottom: 0.4rem;
+}}
+
+.branch-meta {{
+    font-size: 0.85rem;
+    opacity: 0.9;
+}}
+
+.chat-panel {{
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid {block_border};
+    border-radius: 18px;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 14px 32px var(--shadow);
+    margin-bottom: 1rem;
+}}
+
+.chat-badges {{
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.8rem;
+}}
+
+.chat-badge {{
+    background: var(--accent-soft);
+    color: {title_color};
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.72rem;
+    border: 1px solid {block_border};
+}}
 </style>
 """,
     unsafe_allow_html=True,
@@ -1130,23 +1388,79 @@ p, li, label, span, div {{
 
 cart_count = sum(entry["qty"] for entry in st.session_state.cart)
 current_user = st.session_state.user or "Guest"
+st.sidebar.markdown(
+    """
+<div class="sidebar-brand">Pan de Staku</div>
+<div class="sidebar-tag">Artisan Bakery</div>
+""",
+    unsafe_allow_html=True,
+)
 st.sidebar.caption(f"User: {current_user} | Branch: {st.session_state.branch}")
-menu = st.sidebar.radio(
-    f"Navigation Cart({cart_count})",
+st.sidebar.divider()
+nav_items = [
+    "Home",
+    "Login",
+    "Register",
+    "Branch",
+    "Menu List",
+    "Order",
+    "Cart",
+    "DoughBot Chat",
+    "Product",
+    "Service",
+    "Contact",
+    "Admin Dashboard",
+]
+if "nav" not in st.session_state:
+    st.session_state.nav = nav_items[0]
+
+st.markdown('<div class="top-nav">', unsafe_allow_html=True)
+menu = st.radio(
+    "Navigation",
+    nav_items,
+    key="nav",
+    horizontal=True,
+    label_visibility="collapsed",
+)
+st.markdown("</div>", unsafe_allow_html=True)
+
+page_definition = NAV_DEFINITIONS.get(menu, "")
+if page_definition:
+    st.markdown(
+        f"""
+<div class="page-definition">
+  <div class="page-definition-title">{menu}</div>
+  <div class="page-definition-text">{page_definition}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+nav_definition = NAV_DEFINITIONS.get(menu, "")
+if nav_definition:
+    st.sidebar.markdown(
+        f"""
+<div class="nav-guide">
+  <div class="nav-guide-title">Navigation</div>
+  <div class="nav-guide-text">{nav_definition}</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+all_defs = "".join(
     [
-        "Home",
-        "Login",
-        "Register",
-        "Branch",
-        "Menu List",
-        "Order",
-        "Cart",
-        "DoughBot Chat",
-        "Product",
-        "Service",
-        "Contact",
-        "Admin Dashboard",
-    ],
+        f'<div class="nav-all-item"><b>{item}</b>: {NAV_DEFINITIONS.get(item, "")}</div>'
+        for item in nav_items
+    ]
+)
+st.sidebar.markdown(
+    f"""
+<div class="nav-all">
+  {all_defs}
+</div>
+""",
+    unsafe_allow_html=True,
 )
 
 if menu == "Home":
@@ -1302,9 +1616,28 @@ elif menu == "Register":
             st.error(message)
 
 elif menu == "Branch":
+    st.header("Branch Selection")
     branch = st.selectbox("Select Branch", BRANCHES, index=BRANCHES.index(st.session_state.branch))
     st.session_state.branch = branch
     st.success(f"Branch set to {branch}.")
+    manila_col, cebu_col, davao_col = st.columns(3)
+    with manila_col:
+        st.subheader("Manila Branch")
+        st.markdown("**Address:** Ayala Avenue, Makati")
+        st.markdown("**Hours:** 7:00 AM - 9:00 PM")
+        st.markdown("**Best Pair:** Croissant + Latte")
+
+    with cebu_col:
+        st.subheader("Cebu Branch")
+        st.markdown("**Address:** IT Park, Cebu City")
+        st.markdown("**Hours:** 7:00 AM - 9:00 PM")
+        st.markdown("**Best Pair:** Pandesal + Americano")
+
+    with davao_col:
+        st.subheader("Davao Branch")
+        st.markdown("**Address:** Lanang, Davao City")
+        st.markdown("**Hours:** 7:00 AM - 9:00 PM")
+        st.markdown("**Best Pair:** Ube + Mocha")
 
 elif menu == "Menu List":
     st.header("Menu List")
@@ -1350,17 +1683,117 @@ elif menu == "Order":
     if not st.session_state.user:
         st.warning("Login first.")
     else:
-        st.header("Add to Cart")
-        item = st.selectbox("Item", list(all_menu.keys()))
-        available_stock = get_stock(conn, item)
-        st.caption(f"Available stock: {available_stock}")
-        qty = st.number_input("Quantity", min_value=1, max_value=20, value=1)
-        if st.button("Add to Cart"):
-            if qty > available_stock:
-                st.error("Not enough stock for this item.")
-            else:
-                add_to_cart(item, int(qty), all_menu[item])
-                st.success("Added to cart.")
+        st.header("Order Builder")
+        st.markdown(
+            f"""
+<div class="order-card">
+  <div class="order-title">Build Your Order Faster</div>
+  <div class="order-subtitle">
+    Add multiple items in one go. Mix breads, local bakes, coffee, and drinks in the same order.
+  </div>
+  <div class="order-badges">
+    <span class="order-badge">Multi-Item Add</span>
+    <span class="order-badge">Food + Drink Combo</span>
+    <span class="order-badge">Stock Aware</span>
+    <span class="order-badge">Cart Items: {cart_count}</span>
+  </div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+        food_menu = {**bread_menu, **local_bakes_menu}
+        drink_menu = {**coffee_menu, **drinks_menu}
+
+        left_col, right_col = st.columns([1.05, 1])
+
+        with left_col:
+            st.markdown('<div class="order-panel">', unsafe_allow_html=True)
+            st.subheader("Quick Combo")
+            st.caption("Add a food item and a drink in one click.")
+            with st.form("combo_form", clear_on_submit=True):
+                food_item = st.selectbox("Food item", list(food_menu.keys()), key="combo_food_item")
+                food_qty = st.number_input(
+                    "Food quantity",
+                    min_value=1,
+                    max_value=20,
+                    value=1,
+                    key="combo_food_qty",
+                )
+                st.caption(f"Food stock: {get_stock(conn, food_item)}")
+                drink_item = st.selectbox("Drink item", list(drink_menu.keys()), key="combo_drink_item")
+                drink_qty = st.number_input(
+                    "Drink quantity",
+                    min_value=1,
+                    max_value=20,
+                    value=1,
+                    key="combo_drink_qty",
+                )
+                st.caption(f"Drink stock: {get_stock(conn, drink_item)}")
+                combo_submit = st.form_submit_button("Add Combo to Cart")
+
+            if combo_submit:
+                added = []
+                errors = []
+                for item, qty in [(food_item, food_qty), (drink_item, drink_qty)]:
+                    stock = get_stock(conn, item)
+                    if qty > stock:
+                        errors.append(f"{item} (requested {qty}, stock {stock})")
+                    else:
+                        add_to_cart(item, int(qty), all_menu[item])
+                        added.append(f"{item} x{qty}")
+
+                if errors:
+                    st.error("Not enough stock for: " + "; ".join(errors))
+                if added:
+                    st.success("Added: " + ", ".join(added))
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with right_col:
+            st.markdown('<div class="order-panel">', unsafe_allow_html=True)
+            st.subheader("Multi-Item Order")
+            st.caption("Add up to three items at once.")
+            item_options = ["-- Select item --"] + list(all_menu.keys())
+
+            with st.form("multi_item_form", clear_on_submit=True):
+                selections = []
+                for idx in range(1, 4):
+                    row = st.columns([3, 1])
+                    with row[0]:
+                        item = st.selectbox(f"Item {idx}", item_options, key=f"multi_item_{idx}")
+                    with row[1]:
+                        qty = st.number_input(
+                            "Qty",
+                            min_value=1,
+                            max_value=20,
+                            value=1,
+                            key=f"multi_qty_{idx}",
+                        )
+                    selections.append((item, qty))
+                multi_submit = st.form_submit_button("Add Selected Items")
+
+            if multi_submit:
+                added = []
+                errors = []
+                for item, qty in selections:
+                    if item == "-- Select item --":
+                        continue
+                    stock = get_stock(conn, item)
+                    if qty > stock:
+                        errors.append(f"{item} (requested {qty}, stock {stock})")
+                    else:
+                        add_to_cart(item, int(qty), all_menu[item])
+                        added.append(f"{item} x{qty}")
+
+                if errors:
+                    st.error("Not enough stock for: " + "; ".join(errors))
+                if added:
+                    st.success("Added: " + ", ".join(added))
+                if not added and not errors:
+                    st.info("Select at least one item to add.")
+
+            st.markdown("</div>", unsafe_allow_html=True)
 
 elif menu == "Cart":
     if not st.session_state.cart:
@@ -1431,6 +1864,23 @@ elif menu == "Cart":
 
 elif menu == "DoughBot Chat":
     st.title("DoughBot Assistant")
+    st.markdown(
+        """
+<div class="chat-panel">
+  <div class="menu-title">How can we help today?</div>
+  <div class="menu-subtitle">
+    Ask about prices, stock availability, pairings, or quick recommendations.
+  </div>
+  <div class="chat-badges">
+    <span class="chat-badge">Price Check</span>
+    <span class="chat-badge">Stock Status</span>
+    <span class="chat-badge">Best Pairings</span>
+    <span class="chat-badge">Order Guidance</span>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
     for message in st.session_state.chat_messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
