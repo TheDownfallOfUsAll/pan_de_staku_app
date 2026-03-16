@@ -22,6 +22,15 @@ bread_menu = {
     "Danish": 135,
 }
 
+local_bakes_menu = {
+    "Banana Cake": 95,
+    "Pandesal": 25,
+    "Loaf Bread": 85,
+    "Choco Bread": 60,
+    "Yoyo": 30,
+    "Ube": 70,
+}
+
 coffee_menu = {
     "Espresso": 90,
     "Americano": 100,
@@ -32,7 +41,17 @@ coffee_menu = {
     "Flat White": 125,
 }
 
-all_menu = {**bread_menu, **coffee_menu}
+drinks_menu = {
+    "Soda": 35,
+    "Juice": 45,
+    "Coke": 45,
+    "Royal": 45,
+    "Sprite": 45,
+    "MUG Beer": 55,
+    "Lipton": 50,
+}
+
+all_menu = {**bread_menu, **local_bakes_menu, **coffee_menu, **drinks_menu}
 
 
 def hash_password(password: str) -> str:
@@ -166,6 +185,24 @@ def validate_payment(phone: str, otp: str) -> bool:
     return bool(re.fullmatch(r"\d{11}", phone) and re.fullmatch(r"\d{6}", otp))
 
 
+def render_menu_section(title: str, subtitle: str, items: dict[str, int]) -> None:
+    st.subheader(title)
+    st.caption(subtitle)
+
+    item_lines = [f"{item} — PHP {price}" for item, price in items.items()]
+    split_index = (len(item_lines) + 1) // 2
+    left_items = item_lines[:split_index]
+    right_items = item_lines[split_index:]
+
+    cols = st.columns(2)
+    with cols[0]:
+        if left_items:
+            st.markdown("\n".join([f"- {line}" for line in left_items]))
+    with cols[1]:
+        if right_items:
+            st.markdown("\n".join([f"- {line}" for line in right_items]))
+
+
 def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
     prompt_clean = " ".join(prompt.strip().split())
     p = prompt_clean.lower()
@@ -181,6 +218,14 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         "fougasse": "Fougasse",
         "sourdough": "Sourdough",
         "danish": "Danish",
+        "banana cake": "Banana Cake",
+        "pandesal": "Pandesal",
+        "loaf bread": "Loaf Bread",
+        "loaf": "Loaf Bread",
+        "choco bread": "Choco Bread",
+        "chocolate bread": "Choco Bread",
+        "yoyo": "Yoyo",
+        "ube": "Ube",
         "espresso": "Espresso",
         "americano": "Americano",
         "cappuccino": "Cappuccino",
@@ -191,6 +236,16 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         "macchiato": "Macchiato",
         "flat white": "Flat White",
         "flatwhite": "Flat White",
+        "soda": "Soda",
+        "juice": "Juice",
+        "coke": "Coke",
+        "coca cola": "Coke",
+        "royal": "Royal",
+        "sprite": "Sprite",
+        "mug beer": "MUG Beer",
+        "mug": "MUG Beer",
+        "lipton": "Lipton",
+        "iced tea": "Lipton",
     }
     pairings = {
         "Croissant": "Latte",
@@ -200,6 +255,12 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         "Fougasse": "Espresso",
         "Sourdough": "Flat White",
         "Danish": "Macchiato",
+        "Banana Cake": "Latte",
+        "Pandesal": "Americano",
+        "Loaf Bread": "Cappuccino",
+        "Choco Bread": "Mocha",
+        "Yoyo": "Espresso",
+        "Ube": "Flat White",
     }
     personas = [
         ("Aiah", "<3"),
@@ -446,9 +507,21 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         )
 
     if matches(menu_words):
-        bread_list = ", ".join([f"{item} (PHP {price})" for item, price in bread_menu.items()])
+        artisan_list = ", ".join([f"{item} (PHP {price})" for item, price in bread_menu.items()])
+        local_list = ", ".join([f"{item} (PHP {price})" for item, price in local_bakes_menu.items()])
         coffee_list = ", ".join([f"{item} (PHP {price})" for item, price in coffee_menu.items()])
-        return signed_reply("menu", f"Bread:\n{bread_list}\n\nCoffee:\n{coffee_list}")
+        drink_list = ", ".join([f"{item} (PHP {price})" for item, price in drinks_menu.items()])
+        return signed_reply(
+            "menu",
+            "Artisan Bread:\n"
+            + artisan_list
+            + "\n\nLocal Bakes:\n"
+            + local_list
+            + "\n\nCoffee:\n"
+            + coffee_list
+            + "\n\nDrinks:\n"
+            + drink_list,
+        )
 
     mentioned_items = detect_items(p)
     detected_item = mentioned_items[0] if mentioned_items else None
@@ -615,7 +688,10 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         return signed_reply("support", "Sorry about the trouble. Tell me the branch, item, and what happened so I can help.")
 
     if detected_item:
-        paired = pairings.get(detected_item, "a coffee of your choice")
+        if detected_item in drinks_menu:
+            paired = "a fresh bread of your choice"
+        else:
+            paired = pairings.get(detected_item, "a coffee of your choice")
         price = all_menu.get(detected_item)
         stock = get_stock_safe(detected_item)
         if price is not None:
@@ -677,6 +753,10 @@ if st.session_state.appearance == "Dark":
     nav_text_color = "#fff8ec"
     nav_hover = "rgba(255, 248, 236, 0.18)"
     nav_card = "rgba(255, 248, 236, 0.08)"
+    accent_color = "#f3c27a"
+    accent_soft = "rgba(243, 194, 122, 0.18)"
+    glow_color = "rgba(243, 194, 122, 0.35)"
+    shadow_color = "rgba(12, 8, 6, 0.55)"
 elif st.session_state.appearance == "Coffee":
     app_background = (
         "radial-gradient(circle at 14% 12%, rgba(210, 180, 140, 0.25), transparent 36%),"
@@ -691,6 +771,10 @@ elif st.session_state.appearance == "Coffee":
     nav_text_color = "#fff4e7"
     nav_hover = "rgba(255, 244, 231, 0.16)"
     nav_card = "rgba(255, 244, 231, 0.08)"
+    accent_color = "#f0b66a"
+    accent_soft = "rgba(240, 182, 106, 0.2)"
+    glow_color = "rgba(240, 182, 106, 0.35)"
+    shadow_color = "rgba(18, 12, 9, 0.55)"
 elif st.session_state.appearance == "Cheese":
     app_background = (
         "radial-gradient(circle at 12% 16%, rgba(255, 250, 220, 0.42), transparent 38%),"
@@ -705,6 +789,10 @@ elif st.session_state.appearance == "Cheese":
     nav_text_color = "#1d1208"
     nav_hover = "rgba(79, 49, 22, 0.12)"
     nav_card = "rgba(255, 247, 218, 0.48)"
+    accent_color = "#b56a1f"
+    accent_soft = "rgba(181, 106, 31, 0.16)"
+    glow_color = "rgba(181, 106, 31, 0.28)"
+    shadow_color = "rgba(94, 58, 24, 0.3)"
 else:
     app_background = (
         "radial-gradient(circle at 12% 14%, rgba(255, 248, 236, 0.92), transparent 40%),"
@@ -719,10 +807,24 @@ else:
     nav_text_color = "#16100b"
     nav_hover = "rgba(78, 52, 46, 0.12)"
     nav_card = "rgba(255, 248, 236, 0.34)"
+    accent_color = "#c7762f"
+    accent_soft = "rgba(199, 118, 47, 0.16)"
+    glow_color = "rgba(199, 118, 47, 0.28)"
+    shadow_color = "rgba(82, 52, 32, 0.3)"
 
 st.markdown(
     f"""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+:root {{
+    --accent: {accent_color};
+    --accent-soft: {accent_soft};
+    --glow: {glow_color};
+    --shadow: {shadow_color};
+    --card-radius: 18px;
+}}
+
 @keyframes fadeIn {{
     from {{ opacity: 0; transform: translateY(20px); }}
     to {{ opacity: 1; transform: translateY(0); }}
@@ -732,6 +834,7 @@ st.markdown(
     animation: fadeIn 0.8s ease-in-out;
     background: {app_background};
     color: {text_color};
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
 }}
 
 section[data-testid="stSidebar"] {{
@@ -768,8 +871,8 @@ section[data-testid="stSidebar"] [data-baseweb="radio"] label:hover {{
 section[data-testid="stSidebar"] [data-baseweb="radio"] label[data-checked="true"],
 section[data-testid="stSidebar"] [data-baseweb="radio"] label:has(input:checked),
 section[data-testid="stSidebar"] [data-baseweb="radio"] input:checked + div {{
-    background: rgba(255, 244, 231, 0.24);
-    border-left-color: rgba(255, 244, 231, 0.7);
+    background: var(--accent-soft);
+    border-left-color: var(--accent);
     font-weight: 600;
 }}
 
@@ -792,18 +895,234 @@ section[data-testid="stSidebar"] .stRadio > label {{
 
 .block-container {{
     background: {block_background};
-    border: none;
-    border-radius: 18px;
-    padding: 1.4rem 1.2rem;
+    border: 1px solid {block_border};
+    border-radius: var(--card-radius);
+    padding: 1.6rem 1.4rem;
     backdrop-filter: blur(2px);
+    box-shadow: 0 18px 45px var(--shadow);
 }}
 
 h1, h2, h3, .stTitle {{
     color: {title_color};
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    letter-spacing: 0.01em;
 }}
 
-p {{
+p, li, label, span, div {{
     color: {text_color};
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+}}
+
+.stButton > button {{
+    background: linear-gradient(135deg, var(--accent), #ffe1b3);
+    color: #2a1a0f;
+    border: none;
+    border-radius: 999px;
+    padding: 0.6rem 1.4rem;
+    font-weight: 600;
+    box-shadow: 0 10px 24px var(--glow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}}
+
+.stButton > button:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px var(--glow);
+}}
+
+.hero-card {{
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+    border: 1px solid {block_border};
+    border-radius: 22px;
+    padding: 1.8rem 2rem;
+    box-shadow: 0 20px 40px var(--shadow);
+    backdrop-filter: blur(6px);
+}}
+
+.hero-eyebrow {{
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+}}
+
+.hero-title {{
+    font-size: 2.4rem;
+    margin: 0.25rem 0 0.6rem 0;
+}}
+
+.hero-subtitle {{
+    font-size: 1rem;
+    max-width: 650px;
+}}
+
+.hero-badges {{
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: 1.1rem;
+}}
+
+.hero-badge {{
+    background: var(--accent-soft);
+    color: {title_color};
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    border: 1px solid {block_border};
+}}
+
+.menu-section {{
+    margin-top: 1.6rem;
+}}
+
+.menu-header {{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    gap: 1rem;
+}}
+
+.menu-title {{
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: {title_color};
+    font-family: 'Fraunces', 'Times New Roman', serif;
+}}
+
+.menu-subtitle {{
+    font-size: 0.9rem;
+    opacity: 0.9;
+}}
+
+.menu-shell {{
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+    border: 1px solid {block_border};
+    border-radius: 22px;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 18px 40px var(--shadow);
+    backdrop-filter: blur(8px);
+}}
+
+.menu-count {{
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}}
+
+.menu-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}}
+
+.menu-card {{
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid {block_border};
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+    box-shadow: 0 12px 30px var(--shadow);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}}
+
+.menu-card::before {{
+    content: "";
+    position: absolute;
+    inset: -1px;
+    background: radial-gradient(circle at top left, var(--accent-soft), transparent 65%);
+    opacity: 0.9;
+}}
+
+.menu-card:hover {{
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 18px 36px var(--shadow);
+}}
+
+.menu-name {{
+    position: relative;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}}
+
+.menu-price {{
+    position: relative;
+    color: var(--accent);
+    font-weight: 600;
+    display: inline-block;
+    background: var(--accent-soft);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid {block_border};
+}}
+
+.menu-list {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.6rem 1.4rem;
+}}
+
+.menu-line {{
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.4rem 0.2rem;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}}
+
+.menu-line-name {{
+    font-weight: 600;
+}}
+
+.menu-line-dots {{
+    flex: 1;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.35);
+    transform: translateY(-4px);
+}}
+
+.menu-line-price {{
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+}}
+
+.menu-banner {{
+    border-radius: 24px;
+    padding: 1.6rem 2rem;
+    border: 1px solid {block_border};
+    background: linear-gradient(135deg, rgba(255, 246, 214, 0.22), rgba(255, 255, 255, 0.04));
+    box-shadow: 0 20px 42px var(--shadow);
+    margin-bottom: 1.4rem;
+}}
+
+.menu-banner-title {{
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: {title_color};
+    font-family: 'Fraunces', 'Times New Roman', serif;
+}}
+
+.menu-banner-subtitle {{
+    font-size: 1rem;
+    max-width: 620px;
+}}
+
+.menu-banner-pill {{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.8rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid {block_border};
+    background: var(--accent-soft);
+    font-weight: 600;
 }}
 </style>
 """,
@@ -833,8 +1152,25 @@ menu = st.sidebar.radio(
 )
 
 if menu == "Home":
-    st.title("Pan de Staku")
-    st.subheader("Enterprise French Bakery and Coffee Management System")
+    st.markdown(
+        """
+<div class="hero-card">
+  <div class="hero-eyebrow">Pan de Staku</div>
+  <div class="hero-title">Freshly Baked. Brightly Served.</div>
+  <div class="hero-subtitle">
+    Enterprise French bakery and coffee management with local favorites, glow-up visuals,
+    and a refreshed drink bar for every branch.
+  </div>
+  <div class="hero-badges">
+    <span class="hero-badge">Artisan Breads</span>
+    <span class="hero-badge">Local Bakes</span>
+    <span class="hero-badge">Coffee + Drinks</span>
+    <span class="hero-badge">Smart Ordering</span>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         """
@@ -885,8 +1221,16 @@ elif menu == "Product":
     for item, price in bread_menu.items():
         st.write(f"- {item}: PHP {price}")
 
+    st.subheader("Local Favorite Bakes")
+    for item, price in local_bakes_menu.items():
+        st.write(f"- {item}: PHP {price}")
+
     st.subheader("Coffee Program")
     for item, price in coffee_menu.items():
+        st.write(f"- {item}: PHP {price}")
+
+    st.subheader("Drink Bar")
+    for item, price in drinks_menu.items():
         st.write(f"- {item}: PHP {price}")
 
     st.subheader("Product Direction")
@@ -965,9 +1309,44 @@ elif menu == "Branch":
     st.success(f"Branch set to {branch}.")
 
 elif menu == "Menu List":
-    st.header("Full Menu")
-    df = pd.DataFrame(list(all_menu.items()), columns=["Item", "Price"])
-    st.dataframe(df, use_container_width=True)
+    st.header("Menu List")
+    st.markdown(
+        """
+<div class="menu-banner">
+  <div class="menu-banner-title">Curated Menu, Freshly Updated</div>
+  <div class="menu-banner-subtitle">
+    Explore artisan breads, local favorites, coffee classics, and a refreshed drink bar.
+    All prices are updated for quick ordering.
+  </div>
+  <div class="menu-banner-pill">Glow-Up Menu Board</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    render_menu_section(
+        "Signature Bread Collection",
+        "Buttery layers and artisan loaves baked daily.",
+        bread_menu,
+    )
+    st.divider()
+    render_menu_section(
+        "Local Favorite Bakes",
+        "Classic Filipino staples and sweet treats.",
+        local_bakes_menu,
+    )
+    st.divider()
+    render_menu_section(
+        "Coffee Program",
+        "Espresso-based drinks crafted to order.",
+        coffee_menu,
+    )
+    st.divider()
+    render_menu_section(
+        "Drink Bar",
+        "Cold refreshers and bottled favorites.",
+        drinks_menu,
+    )
 
 elif menu == "Order":
     if not st.session_state.user:
