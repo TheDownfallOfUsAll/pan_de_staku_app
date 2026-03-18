@@ -16,6 +16,17 @@ It simulates a **modern smart bakery platform** capable of handling:
 - 📦 Inventory  
 - 📈 Analytics  
 - 💬 AI customer assistance  
+- 🖼 Home brand showcase with centered image and tagline  
+
+---
+
+## 🆕 Recent Updates (March 18, 2026)
+
+- 🏬 Expanded branch coverage to **6 locations**: Manila, Cebu, Davao, Iloilo, General Santos, and Baguio  
+- 🗺 Reworked **Branch page** into dynamic branch cards with selected-branch highlighting  
+- 🏠 Updated **Home page** with centered brand image (`assets/pan_de_staku.png`) and tagline message  
+- 🤖 Improved branch awareness in chatbot responses for both `app.py` and `chatbot.py`  
+- ⚙️ Migrated Streamlit usage from deprecated `use_container_width` to `width="stretch"`  
 
 ---
 
@@ -73,7 +84,7 @@ My recommendation: Croissant with Latte.
 - 🔢 OTP-style payment validation simulation  
 - 🤖 DoughBot chat assistance  
 
-Branch locations: 🏙 Manila • 🌆 Cebu • 🌃 Davao
+Branch locations: 🏙 Manila • 🌆 Cebu • 🌃 Davao • 🌅 Iloilo • 🌇 General Santos • ⛰ Baguio
 
 ---
 
@@ -107,7 +118,7 @@ Admin features include:
 
 The system includes **enterprise-style functionality**:
 
-- 🌍 Multi-branch support: 🏙 Manila • 🌆 Cebu • 🌃 Davao  
+- 🌍 Multi-branch support: 🏙 Manila • 🌆 Cebu • 🌃 Davao • 🌅 Iloilo • 🌇 General Santos • ⛰ Baguio  
 - 🗄 SQLite database persistence  
 - 📦 Inventory auto-deduction when items are sold  
 - 💵 Profit calculation based on product cost  
@@ -120,7 +131,7 @@ The system includes **enterprise-style functionality**:
 
 The app includes **business information tabs** for:
 
-- 🏠 **Home** — Pan de Staku concept explanation  
+- 🏠 **Home** — Pan de Staku concept explanation with centered brand image and welcome tagline  
 - 🥖 **Product** — Bread and coffee offerings  
 - 🛎 **Service** — Service scope and commitments  
 - 📞 **Contact** — Support channels and branch details  
@@ -147,6 +158,7 @@ Use the top navigation to move quickly:
 - 🔠 Custom fonts for modern bakery branding  
 - 🧭 Top horizontal navigation for fast access  
 - 🧾 Menu lists styled like real café menus  
+- 🖼 Centered Home image spotlight (`assets/pan_de_staku.png`) with branding message
 
 ---
 
@@ -208,6 +220,23 @@ Then open:
 ```
 http://localhost:8501
 ```
+
+Optional standalone chatbot page:
+
+```bash
+streamlit run chatbot.py
+```
+
+---
+
+# 🧩 Streamlit Compatibility Note
+
+To align with newer Streamlit versions (post-2025 deprecation window), this project now uses:
+
+- `width="stretch"` instead of `use_container_width=True`  
+- `width="content"` instead of `use_container_width=False`  
+
+This avoids repeated deprecation warnings and keeps UI rendering future-safe.
 
 ---
 
@@ -340,6 +369,22 @@ Expected:
 
 ```text
 Delivery availability and base fee information.
+```
+
+---
+
+### 🧪 Test 5 - Branches
+
+Input:
+
+```text
+What branches do you have?
+```
+
+Expected:
+
+```text
+A response listing Manila, Cebu, Davao, Iloilo, General Santos, and Baguio.
 ```
 
 ---
