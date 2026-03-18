@@ -1,9 +1,12 @@
+import base64
 import hashlib
 import random
 import re
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from zipfile import ZipFile
+import xml.etree.ElementTree as ET
 
 import pandas as pd
 import streamlit as st
@@ -90,6 +93,7 @@ all_menu = {**bread_menu, **local_bakes_menu, **coffee_menu, **drinks_menu}
 NAV_DEFINITIONS = {
     "Home": "Brand overview, highlights, and vision.",
     "Login": "Sign in to place orders and access your account.",
+    "Presentation": "View, download, and preview the Pan de Staku presentation deck.",
     "Register": "Create a new customer account.",
     "Branch": "Choose your branch and view local details.",
     "Menu List": "Full menu with updated prices.",
@@ -259,6 +263,58 @@ def render_menu_section(title: str, subtitle: str, items: dict[str, int]) -> Non
     with cols[1]:
         if right_items:
             st.markdown("\n".join([f"- {line}" for line in right_items]))
+
+
+def get_presentation_paths() -> tuple[Path | None, Path | None]:
+    pptx_candidates = [Path("assets/Pan de Staku.pptx"), Path("Pan de Staku.pptx")]
+    pptx_path = next((candidate for candidate in pptx_candidates if candidate.exists()), None)
+
+    pdf_candidates = [Path("assets/Pan de Staku.pdf"), Path("Pan de Staku.pdf")]
+    if pptx_path:
+        pdf_candidates.insert(0, pptx_path.with_suffix(".pdf"))
+    pdf_path = next((candidate for candidate in pdf_candidates if candidate.exists()), None)
+    return pptx_path, pdf_path
+
+
+def extract_presentation_outline(pptx_path: Path) -> list[str]:
+    try:
+        with ZipFile(pptx_path) as pptx_zip:
+            slide_files = []
+            for file_name in pptx_zip.namelist():
+                match = re.fullmatch(r"ppt/slides/slide(\d+)\.xml", file_name)
+                if match:
+                    slide_files.append((int(match.group(1)), file_name))
+            slide_files.sort(key=lambda item: item[0])
+
+            namespace = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+            outlines: list[str] = []
+            for slide_no, file_name in slide_files:
+                root = ET.fromstring(pptx_zip.read(file_name))
+                texts = [
+                    node.text.strip()
+                    for node in root.findall(".//a:t", namespace)
+                    if node.text and node.text.strip()
+                ]
+                first_text = texts[0] if texts else "No visible title text found."
+                outlines.append(f"Slide {slide_no}: {first_text}")
+            return outlines
+    except Exception:
+        return []
+
+
+def render_pdf_embed(pdf_path: Path, height: int = 720) -> None:
+    pdf_base64 = base64.b64encode(pdf_path.read_bytes()).decode("utf-8")
+    st.markdown(
+        f"""
+<iframe
+    class="presentation-frame"
+    src="data:application/pdf;base64,{pdf_base64}"
+    width="100%"
+    height="{height}">
+</iframe>
+""",
+        unsafe_allow_html=True,
+    )
 
 
 def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
@@ -1046,6 +1102,39 @@ p, li, label, span, div {{
     border: 1px solid {block_border};
 }}
 
+.presentation-card {{
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+    border: 1px solid {block_border};
+    border-radius: 20px;
+    padding: 1.3rem 1.4rem;
+    box-shadow: 0 18px 36px var(--shadow);
+    margin-bottom: 0.9rem;
+}}
+
+.presentation-title {{
+    font-family: 'Fraunces', 'Times New Roman', serif;
+    font-size: 1.4rem;
+    margin-bottom: 0.45rem;
+}}
+
+.presentation-meta {{
+    font-size: 0.9rem;
+    opacity: 0.95;
+}}
+
+.presentation-outline {{
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid {block_border};
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
+}}
+
+.presentation-frame {{
+    border: 1px solid {block_border};
+    border-radius: 18px;
+    box-shadow: 0 18px 36px var(--shadow);
+}}
+
 .menu-section {{
     margin-top: 1.6rem;
 }}
@@ -1443,6 +1532,7 @@ st.sidebar.divider()
 nav_items = [
     "Home",
     "Login",
+    "Presentation",
     "Register",
     "Branch",
     "Menu List",
@@ -1667,6 +1757,75 @@ elif menu == "Login":
             st.success("Login successful.")
         else:
             st.error("Invalid credentials.")
+
+elif menu == "Presentation":
+    st.header("Presentation")
+    st.write("Access the latest Pan de Staku deck with download options and in-app preview.")
+
+    pptx_path, pdf_path = get_presentation_paths()
+    if not pptx_path and not pdf_path:
+        st.error("Presentation file not found. Add `Pan de Staku.pptx` or `Pan de Staku.pdf` in the `assets` folder.")
+    else:
+        primary_path = pptx_path or pdf_path
+        file_info = primary_path.stat()
+        file_size_mb = file_info.st_size / (1024 * 1024)
+        modified_time = datetime.fromtimestamp(file_info.st_mtime).strftime("%B %d, %Y %I:%M %p")
+
+        available_files = []
+        if pptx_path:
+            available_files.append("PPTX")
+        if pdf_path:
+            available_files.append("PDF")
+        available_label = ", ".join(available_files) if available_files else "None"
+
+        st.markdown(
+            f"""
+<div class="presentation-card">
+  <div class="presentation-title">Pan de Staku Presentation Deck</div>
+  <div class="presentation-meta"><b>Available Files:</b> {available_label}</div>
+  <div class="presentation-meta"><b>Primary File:</b> {primary_path.name}</div>
+  <div class="presentation-meta"><b>Primary File Size:</b> {file_size_mb:.2f} MB</div>
+  <div class="presentation-meta"><b>Last Updated:</b> {modified_time}</div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+        download_col_1, download_col_2 = st.columns(2)
+        with download_col_1:
+            if pptx_path:
+                st.download_button(
+                    "Download PPTX",
+                    data=pptx_path.read_bytes(),
+                    file_name=pptx_path.name,
+                    mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                )
+        with download_col_2:
+            if pdf_path:
+                st.download_button(
+                    "Download PDF",
+                    data=pdf_path.read_bytes(),
+                    file_name=pdf_path.name,
+                    mime="application/pdf",
+                )
+
+        outline = extract_presentation_outline(pptx_path) if pptx_path else []
+        if outline:
+            st.subheader("Slide Outline")
+            st.markdown('<div class="presentation-outline">', unsafe_allow_html=True)
+            st.caption(f"Detected slides: {len(outline)}")
+            for line in outline:
+                st.write(f"- {line}")
+            st.markdown("</div>", unsafe_allow_html=True)
+        elif pptx_path:
+            st.caption("Slide outline not detected from the current PPTX file.")
+
+        st.subheader("Presentation Viewer")
+        if pdf_path:
+            render_pdf_embed(pdf_path, height=780)
+            st.caption(f"Displaying PDF preview from `{pdf_path}`.")
+        else:
+            st.warning("PDF preview is unavailable. Add `Pan de Staku.pdf` in `assets/` for in-app viewing.")
 
 elif menu == "Register":
     st.header("Register")
