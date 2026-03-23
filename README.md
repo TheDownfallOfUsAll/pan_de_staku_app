@@ -20,12 +20,11 @@ It simulates a **modern smart bakery platform** capable of handling:
 
 ---
 
-## 🆕 Recent Updates (March 18, 2026)
+## 🆕 Recent Updates (March 23, 2026)
 
-- 🏬 Expanded branch coverage to **6 locations**: Manila, Cebu, Davao, Iloilo, General Santos, and Baguio  
-- 🗺 Reworked **Branch page** into dynamic branch cards with selected-branch highlighting  
-- 🏠 Updated **Home page** with centered brand image (`assets/pan_de_staku.png`) and tagline message  
-- 🤖 Improved branch awareness in chatbot responses for both `app.py` and `chatbot.py`  
+- 🧠 Added **optional OpenAI-powered responses** for DoughBot with automatic fallback to the local rules engine  
+- 🧾 Updated the **Presentation** page to always render the PDF preview inline  
+- 🧪 Added OpenAI connection status panel and environment-based tuning knobs  
 - ⚙️ Migrated Streamlit usage from deprecated `use_container_width` to `width="stretch"`  
 
 ---
@@ -42,6 +41,7 @@ DoughBot helps customers interact with the bakery using **natural conversation**
 - 🚚 Provide **delivery and branch information**  
 - 💳 Explain **payment steps (GCash and Maya flow)**  
 - 🛍 Guide users through **order and checkout steps**  
+- 🧠 Optional OpenAI answers for **open-ended questions** (falls back if API key is missing)  
 
 ---
 
@@ -98,7 +98,7 @@ DoughBot supports:
 - 🚚 Delivery and branch FAQs  
 - 🛍 Ordering and payment guidance  
 
-The chatbot uses **rule-based, prompt-driven conversational logic**.
+The chatbot uses **rule-based logic** by default and can switch to **OpenAI responses** when enabled.
 
 ---
 
@@ -207,6 +207,18 @@ source venv/bin/activate
 pip install streamlit pandas
 ```
 
+Optional OpenAI SDK (for AI responses):
+
+```bash
+pip install openai
+```
+
+Optional PDF viewer (if available for your Python version):
+
+```bash
+pip install "streamlit[pdf]"
+```
+
 ---
 
 ## 5️⃣ Run the Application
@@ -228,6 +240,20 @@ streamlit run chatbot.py
 ```
 
 ---
+
+# 🔑 OpenAI Setup (Optional)
+
+To enable OpenAI responses:
+
+```bash
+setx OPENAI_API_KEY "your_api_key_here"
+```
+
+Optional tuning (environment variables):
+
+- `OPENAI_MODEL` (default: `gpt-4.1-mini`)  
+- `OPENAI_MAX_HISTORY` (default: `12`)  
+- `OPENAI_TEMPERATURE` (default: `0.7`)  
 
 # 🧩 Streamlit Compatibility Note
 
@@ -440,7 +466,7 @@ The system follows a **multi-layer structure**:
 | ⚙️ Backend   | Python             |
 | 🗄 Database  | SQLite             |
 | 📊 Analytics | Pandas             |
-| 🤖 AI Logic  | Rule-based chatbot |
+| 🤖 AI Logic  | Rule-based + OpenAI (optional) |
 
 ---
 
@@ -448,7 +474,6 @@ The system follows a **multi-layer structure**:
 
 Possible upgrades:
 
-- 🧠 Real **LLM integration** (OpenAI or local models)  
 - 🎤 **Voice ordering workflow**  
 - 📱 Mobile-first responsive UI refinement  
 - 💳 Real **payment gateway integration** (GCash, Maya, Stripe)  
