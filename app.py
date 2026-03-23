@@ -1,4 +1,5 @@
 import base64
+import importlib.util
 import hashlib
 import random
 import re
@@ -10,10 +11,12 @@ import xml.etree.ElementTree as ET
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 DB_PATH = "pan_de_staku.db"
 ADMIN_USERNAME = "admin"
 ADMIN_DEFAULT_PASSWORD = "admin123"
+HAS_PDF_VIEWER = importlib.util.find_spec("streamlit_pdf") is not None
 BRANCH_DETAILS = {
     "Manila": {
         "address": "Ayala Avenue, Makati",
@@ -276,6 +279,11 @@ def get_presentation_paths() -> tuple[Path | None, Path | None]:
     return pptx_path, pdf_path
 
 
+@st.cache_data(show_spinner=False)
+def load_binary_file(path: Path) -> bytes:
+    return path.read_bytes()
+
+
 def extract_presentation_outline(pptx_path: Path) -> list[str]:
     try:
         with ZipFile(pptx_path) as pptx_zip:
@@ -302,19 +310,29 @@ def extract_presentation_outline(pptx_path: Path) -> list[str]:
         return []
 
 
-def render_pdf_embed(pdf_path: Path, height: int = 720) -> None:
-    pdf_base64 = base64.b64encode(pdf_path.read_bytes()).decode("utf-8")
-    st.markdown(
-        f"""
+def render_pdf_embed(pdf_bytes: bytes, height: int = 720) -> None:
+    if HAS_PDF_VIEWER and hasattr(st, "pdf"):
+        st.pdf(pdf_bytes, height=height)
+        return
+
+    pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+    viewer_html = f"""
+<style>
+  .presentation-frame {{
+    width: 100%;
+    height: {height}px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 18px;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+  }}
+</style>
 <iframe
-    class="presentation-frame"
-    src="data:application/pdf;base64,{pdf_base64}"
-    width="100%"
-    height="{height}">
+  class="presentation-frame"
+  src="data:application/pdf;base64,{pdf_base64}"
+  type="application/pdf">
 </iframe>
-""",
-        unsafe_allow_html=True,
-    )
+"""
+    components.html(viewer_html, height=height + 24, scrolling=True)
 
 
 def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
@@ -1791,12 +1809,15 @@ elif menu == "Presentation":
             unsafe_allow_html=True,
         )
 
+        pptx_bytes = load_binary_file(pptx_path) if pptx_path else None
+        pdf_bytes = load_binary_file(pdf_path) if pdf_path else None
+
         download_col_1, download_col_2 = st.columns(2)
         with download_col_1:
             if pptx_path:
                 st.download_button(
                     "Download PPTX",
-                    data=pptx_path.read_bytes(),
+                    data=pptx_bytes,
                     file_name=pptx_path.name,
                     mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
                 )
@@ -1804,7 +1825,7 @@ elif menu == "Presentation":
             if pdf_path:
                 st.download_button(
                     "Download PDF",
-                    data=pdf_path.read_bytes(),
+                    data=pdf_bytes,
                     file_name=pdf_path.name,
                     mime="application/pdf",
                 )
@@ -1821,8 +1842,8 @@ elif menu == "Presentation":
             st.caption("Slide outline not detected from the current PPTX file.")
 
         st.subheader("Presentation Viewer")
-        if pdf_path:
-            render_pdf_embed(pdf_path, height=780)
+        if pdf_path and pdf_bytes:
+            render_pdf_embed(pdf_bytes, height=780)
             st.caption(f"Displaying PDF preview from `{pdf_path}`.")
         else:
             st.warning("PDF preview is unavailable. Add `Pan de Staku.pdf` in `assets/` for in-app viewing.")

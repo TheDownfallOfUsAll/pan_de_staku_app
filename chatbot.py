@@ -1,8 +1,14 @@
+import os
 import streamlit as st
 import pandas as pd
 import time
 import random
 import re
+
+try:
+    from openai import OpenAI
+except Exception:  # pragma: no cover - optional dependency
+    OpenAI = None
 
 st.set_page_config(
     page_title="Pan de Staku AI",
@@ -114,6 +120,9 @@ ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
 BRANCHES = ["Manila", "Cebu", "Davao", "Iloilo", "General Santos", "Baguio"]
 BRANCH_LIST_TEXT = ", ".join(BRANCHES)
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+OPENAI_MAX_HISTORY = int(os.getenv("OPENAI_MAX_HISTORY", "12"))
+OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
 
 # ------------------------------------------------
 # MENU DATA
@@ -157,6 +166,80 @@ if "admin_logged_in" not in st.session_state:
     st.session_state.admin_logged_in = False
 
 # ------------------------------------------------
+# OPENAI HELPERS
+# ------------------------------------------------
+def _get_openai_api_key() -> str | None:
+    key = os.getenv("OPENAI_API_KEY")
+    if key:
+        return key
+    try:
+        return st.secrets.get("OPENAI_API_KEY")
+    except Exception:
+        return None
+
+
+@st.cache_resource(show_spinner=False)
+def _get_openai_client():
+    if OpenAI is None:
+        return None
+    api_key = _get_openai_api_key()
+    if not api_key:
+        return None
+    return OpenAI(api_key=api_key)
+
+
+def _build_system_prompt() -> str:
+    menu_lines = "\n".join([f"- {item}: PHP {price}" for item, price in menu_items.items()])
+    return (
+        "You are DoughBot, a friendly bakery assistant for Pan de Staku. "
+        "Be warm, concise, and helpful. Use only the menu and prices provided below. "
+        "If a user asks for an item not listed, say you do not see it and suggest a close alternative. "
+        "You can recommend pairings and simple recipes when asked.\n\n"
+        f"Branches: {BRANCH_LIST_TEXT}\n"
+        "Menu and prices:\n"
+        f"{menu_lines}"
+    )
+
+
+def _build_openai_messages() -> list[dict[str, str]]:
+    messages: list[dict[str, str]] = [{"role": "system", "content": _build_system_prompt()}]
+    history = st.session_state.messages[-OPENAI_MAX_HISTORY:]
+    for msg in history:
+        role = msg.get("role")
+        content = msg.get("content")
+        if role in {"user", "assistant"} and content:
+            messages.append({"role": role, "content": str(content)})
+    return messages
+
+
+def _extract_output_text(response) -> str | None:
+    try:
+        output = getattr(response, "output", None) or []
+        for item in output:
+            for content in getattr(item, "content", []) or []:
+                if getattr(content, "type", "") == "output_text":
+                    return getattr(content, "text", None)
+    except Exception:
+        return None
+    return None
+
+
+def _openai_reply() -> str | None:
+    client = _get_openai_client()
+    if not client:
+        return None
+    try:
+        response = client.responses.create(
+            model=OPENAI_MODEL,
+            input=_build_openai_messages(),
+            temperature=OPENAI_TEMPERATURE,
+        )
+        text = getattr(response, "output_text", None) or _extract_output_text(response)
+        return text.strip() if text else None
+    except Exception:
+        return None
+
+# ------------------------------------------------
 # HEADER
 # ------------------------------------------------
 with st.sidebar:
@@ -182,6 +265,18 @@ with st.sidebar:
         if st.button("Clear Chat History"):
             st.session_state.messages = []
             st.success("Chat history cleared.")
+
+    st.divider()
+    st.subheader("OpenAI Status")
+    if _get_openai_client():
+        st.success("OpenAI connected")
+        st.caption(f"Model: {OPENAI_MODEL}")
+    elif OpenAI is None:
+        st.warning("OpenAI SDK not installed")
+        st.caption("Install with: pip install openai")
+    else:
+        st.warning("OpenAI API key not set")
+        st.caption("Set OPENAI_API_KEY or add it to Streamlit secrets.")
 
 st.markdown("Tip: Try asking `Give me a recipe for chicken, garlic, onion`.")
 st.title("🥐 Pan de Staku Smart Bakery")
@@ -538,11 +633,18 @@ def doughbot_ai(prompt):
     return _avoid_repeat(response)
 
 
+def generate_response(prompt: str) -> str:
+    openai_text = _openai_reply()
+    if openai_text:
+        return openai_text
+    return doughbot_ai(prompt)
+
+
 if st.session_state.pending_recipe_prompt:
     prompt_text = st.session_state.pending_recipe_prompt
     st.session_state.pending_recipe_prompt = None
     st.session_state.messages.append({"role": "user", "content": prompt_text})
-    recipe_response = doughbot_ai(prompt_text)
+    recipe_response = generate_response(prompt_text)
     st.session_state.messages.append({"role": "assistant", "content": recipe_response})
 
 # ------------------------------------------------
@@ -574,7 +676,7 @@ with col2:
             with st.spinner("DoughBot is thinking..."):
                 time.sleep(1)
 
-                response = doughbot_ai(user_prompt)
+                response = generate_response(user_prompt)
 
                 st.write(response)
 
