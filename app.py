@@ -49,6 +49,26 @@ BRANCH_DETAILS = {
         "hours": "7:00 AM - 9:00 PM",
         "best_pair": "Pain au Chocolat + Latte",
     },
+    "Nueva Vizcaya - Bayombong": {
+        "address": "Capitol Road, Bayombong, Nueva Vizcaya",
+        "hours": "6:30 AM - 8:30 PM",
+        "best_pair": "Brioche + Cappuccino",
+    },
+    "Nueva Vizcaya - Solano": {
+        "address": "Rizal Avenue, Solano, Nueva Vizcaya",
+        "hours": "6:30 AM - 8:30 PM",
+        "best_pair": "Pandesal + Americano",
+    },
+    "Nueva Vizcaya - Bambang": {
+        "address": "National Highway, Bambang, Nueva Vizcaya",
+        "hours": "6:30 AM - 8:30 PM",
+        "best_pair": "Loaf Bread + Flat White",
+    },
+    "Paranaque": {
+        "address": "Aguirre Avenue, Paranaque City",
+        "hours": "7:00 AM - 9:00 PM",
+        "best_pair": "Croissant + Mocha",
+    },
 }
 BRANCHES = list(BRANCH_DETAILS.keys())
 BRANCH_LIST_TEXT = ", ".join(BRANCHES)
@@ -373,6 +393,22 @@ def get_presentation_paths() -> tuple[Path | None, Path | None]:
 @st.cache_data(show_spinner=False)
 def load_binary_file(path: Path) -> bytes:
     return path.read_bytes()
+
+
+@st.cache_data(show_spinner=False)
+def load_base64_file(path: Path) -> str:
+    return base64.b64encode(path.read_bytes()).decode("utf-8")
+
+
+def get_image_mime(path: Path) -> str:
+    suffix = path.suffix.lower()
+    if suffix in {".jpg", ".jpeg"}:
+        return "image/jpeg"
+    if suffix == ".webp":
+        return "image/webp"
+    if suffix == ".gif":
+        return "image/gif"
+    return "image/png"
 
 
 def extract_presentation_outline(pptx_path: Path) -> list[str]:
@@ -1233,6 +1269,27 @@ p, li, label, span, div {{
     border: 1px solid {block_border};
 }}
 
+.home-image {{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1.2rem;
+}}
+
+.home-image img {{
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    border: 1px solid {block_border};
+    box-shadow: 0 18px 36px var(--shadow);
+}}
+
+.home-image-caption {{
+    text-align: center;
+    margin-top: 0.55rem;
+    font-weight: 600;
+}}
+
 .presentation-card {{
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
     border: 1px solid {block_border};
@@ -1793,10 +1850,14 @@ without losing the feel of a neighborhood bakery.
     if home_image:
         left_col, center_col, right_col = st.columns([1, 2, 1])
         with center_col:
-            st.image(str(home_image), width="stretch")
+            image_b64 = load_base64_file(home_image)
+            image_mime = get_image_mime(home_image)
             st.markdown(
-                """
-<div style="text-align: center; margin-top: 0.55rem; font-weight: 600;">
+                f"""
+<div class="home-image">
+  <img src="data:{image_mime};base64,{image_b64}" alt="Pan de Staku hero image" />
+</div>
+<div class="home-image-caption">
   Pan de Staku: Freshly baked every day, warmly served for every moment.
 </div>
 """,

@@ -118,7 +118,18 @@ h1, h2, h3 {
 CHATBOT_NAME = "DoughBot"
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
-BRANCHES = ["Manila", "Cebu", "Davao", "Iloilo", "General Santos", "Baguio"]
+BRANCHES = [
+    "Manila",
+    "Cebu",
+    "Davao",
+    "Iloilo",
+    "General Santos",
+    "Baguio",
+    "Nueva Vizcaya - Bayombong",
+    "Nueva Vizcaya - Solano",
+    "Nueva Vizcaya - Bambang",
+    "Paranaque",
+]
 BRANCH_LIST_TEXT = ", ".join(BRANCHES)
 SIGNUP_BONUS = 300
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
