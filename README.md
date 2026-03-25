@@ -1,5 +1,5 @@
 ﻿# 🥐 Pan de Staku - Enterprise Bakery & Coffee Management System with AI Chatbot 🤖
-**Version:** 1.5.0 (March 23, 2026)
+**Version:** 1.6.0 (March 25, 2026)
 
 **Pan de Staku** is a **French-inspired bakery and coffee management system** built with **Streamlit** ☕.  
 It delivers a **complete digital bakery platform** with customer ordering, analytics, branch control, and an AI-style assistant.
@@ -21,7 +21,12 @@ It simulates a **modern smart bakery platform** capable of handling:
 
 ---
 
-## 🆕 Recent Updates (March 23, 2026)
+## 🆕 Recent Updates (March 25, 2026)
+
+- Added Nueva Vizcaya branches (Bayombong, Solano, Bambang) plus Paranaque across the app and DoughBot  
+- Home hero image now embedded to avoid Streamlit media file cache/missing ID errors on rerun  
+
+## 🗂 Previous Updates (March 23, 2026)
 
 - 🧠 Added **optional OpenAI-powered responses** for DoughBot with automatic fallback to the local rules engine  
 - 🧾 Updated the **Presentation** page to always render the PDF preview inline  
@@ -87,12 +92,10 @@ My recommendation: Croissant with Latte.
 - 🌏 Branch-based ordering  
 - 🔢 OTP-style payment validation simulation  
 - 💵 Cash payments with mobile number only  
-- ?? Cash payments with mobile number only  
 - 🤖 DoughBot chat assistance  
 - 🎁 PHP 300 signup wallet credit (auto-applied)  
-- ?? PHP 300 signup wallet credit (auto-applied)  
 
-Branch locations: 🏙 Manila • 🌆 Cebu • 🌃 Davao • 🌅 Iloilo • 🌇 General Santos • ⛰ Baguio
+Branch locations: 🏙 Manila • 🌆 Cebu • 🌃 Davao • 🌅 Iloilo • 🌇 General Santos • ⛰ Baguio • Nueva Vizcaya (Bayombong, Solano, Bambang) • Paranaque
 
 ---
 
@@ -126,7 +129,7 @@ Admin features include:
 
 The system includes **enterprise-style functionality**:
 
-- 🌍 Multi-branch support: 🏙 Manila • 🌆 Cebu • 🌃 Davao • 🌅 Iloilo • 🌇 General Santos • ⛰ Baguio  
+- 🌍 Multi-branch support: 🏙 Manila • 🌆 Cebu • 🌃 Davao • 🌅 Iloilo • 🌇 General Santos • ⛰ Baguio • Nueva Vizcaya (Bayombong, Solano, Bambang) • Paranaque  
 - 🗄 SQLite database persistence  
 - 📦 Inventory auto-deduction when items are sold  
 - 💵 Profit calculation based on product cost  
@@ -166,7 +169,7 @@ Use the top navigation to move quickly:
 - 🔠 Custom fonts for modern bakery branding  
 - 🧭 Top horizontal navigation for fast access  
 - 🧾 Menu lists styled like real café menus  
-- 🖼 Centered Home image spotlight (`assets/pan_de_staku.png`) with branding message
+- 🖼 Centered Home image spotlight (`assets/pan_de_staku.png`) embedded to avoid media cache errors
 
 ---
 
@@ -444,7 +447,7 @@ What branches do you have?
 Expected:
 
 ```text
-A response listing Manila, Cebu, Davao, Iloilo, General Santos, and Baguio.
+A response listing Manila, Cebu, Davao, Iloilo, General Santos, Baguio, Nueva Vizcaya (Bayombong/Solano/Bambang), and Paranaque.
 ```
 
 ---
