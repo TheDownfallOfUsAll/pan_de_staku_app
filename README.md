@@ -1,5 +1,5 @@
 ﻿# 🥐 Pan de Staku - Enterprise Bakery & Coffee Management System with AI Chatbot 🤖
-**Version:** 1.6.0 (March 25, 2026)
+**Version:** 1.7.0 (April 20, 2026)
 
 **Pan de Staku** is a **French-inspired bakery and coffee management system** built with **Streamlit** ☕.  
 It delivers a **complete digital bakery platform** with customer ordering, analytics, branch control, and an AI-style assistant.
@@ -21,7 +21,15 @@ It simulates a **modern smart bakery platform** capable of handling:
 
 ---
 
-## 🆕 Recent Updates (March 25, 2026)
+## 🆕 Recent Updates (April 20, 2026)
+
+- ✨ **Major UI Design Overhaul**: Added modern animations (fadeIn, slideIn, pulse, glow), enhanced button effects with shimmer animations, improved hover states, and upgraded visual hierarchy across all pages
+- 🎨 **Menu Enhancements**: Added emoji icons to all menu items (🥐, 🍞, ☕, etc.) for better visual appeal and user experience
+- 🤖 **DoughBot Chatbot Improvements**: Redesigned chatbot interface with animated chat messages, recipe cards with structured HTML formatting, improved input styling with focus effects, and enhanced conversational capabilities for broader topic responses
+- 🎭 **Theme System Refinements**: Polished all appearance themes (Light, Dark, Coffee, Cheese) with better gradients, shadows, and backdrop filters for a premium cafe aesthetic
+- 📱 **Interactive Elements**: Added advanced CSS animations, transform effects, and glowing borders to cards, buttons, and navigation elements for a more engaging user interface  
+
+## 🗂 Previous Updates (March 25, 2026)
 
 - Added Nueva Vizcaya branches (Bayombong, Solano, Bambang) plus Paranaque across the app and DoughBot  
 - Home hero image now embedded to avoid Streamlit media file cache/missing ID errors on rerun  
@@ -40,7 +48,7 @@ It simulates a **modern smart bakery platform** capable of handling:
 # 🤖 AI Chatbot - DoughBot
 
 The system includes an **AI bakery assistant** called **DoughBot**.  
-DoughBot helps customers interact with the bakery using **natural conversation**.
+DoughBot helps customers interact with the bakery using **natural conversation** and can respond to a wide variety of topics.
 
 ## 🧠 Capabilities
 
@@ -51,6 +59,9 @@ DoughBot helps customers interact with the bakery using **natural conversation**
 - 🛍 Guide users through **order and checkout steps**  
 - 🧠 Optional OpenAI answers for **open-ended questions** (falls back if API key is missing)  
 - 🎁 Explain the **PHP 300 signup wallet bonus**  
+- 💬 **General Conversation**: Respond to greetings, small talk, and off-topic queries with friendly, context-aware replies  
+- 📝 **Recipe Generation**: Create simple recipes based on user-provided ingredients or dish names  
+- ❓ **Help & Support**: Provide assistance on any bakery-related or general inquiry  
 
 ---
 
@@ -108,6 +119,9 @@ DoughBot supports:
 - ☕ Coffee and bread pairing suggestions  
 - 🚚 Delivery and branch FAQs  
 - 🛍 Ordering and payment guidance  
+- 📝 **Recipe Generation**: Interactive recipe creation with ingredient-based suggestions  
+- ❓ **General Assistance**: Responds to any topic with helpful, bakery-themed replies  
+- 🎨 **Enhanced UI**: Animated chat interface with recipe cards and improved styling  
 
 The chatbot uses **rule-based logic** by default and can switch to **OpenAI responses** when enabled.
 
@@ -165,11 +179,15 @@ Use the top navigation to move quickly:
 
 # 🎨 UI Highlights
 
-- ✨ Glow-up themed interface with gradients and shadows  
-- 🔠 Custom fonts for modern bakery branding  
-- 🧭 Top horizontal navigation for fast access  
-- 🧾 Menu lists styled like real café menus  
-- 🖼 Centered Home image spotlight (`assets/pan_de_staku.png`) embedded to avoid media cache errors
+- ✨ **Advanced Animations**: Smooth fade-in, slide-in, pulse, and glow effects for dynamic page loading and interactions
+- 🔠 **Premium Typography**: Custom Fraunces and Space Grotesk fonts with enhanced letter spacing and hierarchy
+- 🧭 **Interactive Navigation**: Top horizontal navigation with hover animations and active state indicators
+- 🥐 **Icon-Enhanced Menus**: Emoji icons (🥐, 🍞, ☕) added to all menu items for visual clarity and appeal
+- 🎭 **Multi-Theme Support**: Four distinct themes (Light, Dark, Coffee, Cheese) with improved gradients and glassmorphism effects
+- 💫 **Button Effects**: Shimmer animations, scaling transforms, and glowing shadows on hover for modern interactivity
+- 🤖 **Enhanced Chatbot UI**: Animated chat bubbles, recipe cards with structured formatting, and improved input field styling
+- 🖼 **Centered Hero Image**: Embedded home image with responsive design and glow effects
+- 🌟 **Card Animations**: Hover effects with scaling, shadow enhancement, and border color transitions
 
 ---
 
