@@ -74,42 +74,42 @@ BRANCHES = list(BRANCH_DETAILS.keys())
 BRANCH_LIST_TEXT = ", ".join(BRANCHES)
 
 bread_menu = {
-    "Croissant": 120,
-    "Baguette": 100,
-    "Brioche": 150,
-    "Pain au Chocolat": 140,
-    "Fougasse": 130,
-    "Sourdough": 160,
-    "Danish": 135,
+    "🥐 Croissant": 120,
+    "🍞 Baguette": 100,
+    "🥖 Brioche": 150,
+    "🥯 Pain au Chocolat": 140,
+    "🥨 Fougasse": 130,
+    "🍞 Sourdough": 160,
+    "🥐 Danish": 135,
 }
 
 local_bakes_menu = {
-    "Banana Cake": 95,
-    "Pandesal": 25,
-    "Loaf Bread": 85,
-    "Choco Bread": 60,
-    "Yoyo": 30,
-    "Ube": 70,
+    "🍰 Banana Cake": 95,
+    "🍞 Pandesal": 25,
+    "🍞 Loaf Bread": 85,
+    "🍞 Choco Bread": 60,
+    "🍪 Yoyo": 30,
+    "🥧 Ube": 70,
 }
 
 coffee_menu = {
-    "Espresso": 90,
-    "Americano": 100,
-    "Cappuccino": 120,
-    "Latte": 130,
-    "Mocha": 140,
-    "Macchiato": 115,
-    "Flat White": 125,
+    "☕ Espresso": 90,
+    "☕ Americano": 100,
+    "☕ Cappuccino": 120,
+    "☕ Latte": 130,
+    "☕ Mocha": 140,
+    "☕ Macchiato": 115,
+    "☕ Flat White": 125,
 }
 
 drinks_menu = {
-    "Soda": 35,
-    "Juice": 45,
-    "Coke": 45,
-    "Royal": 45,
-    "Sprite": 45,
-    "MUG Beer": 55,
-    "Lipton": 50,
+    "🥤 Soda": 35,
+    "🥤 Juice": 45,
+    "🥤 Coke": 45,
+    "🥤 Royal": 45,
+    "🥤 Sprite": 45,
+    "🍺 MUG Beer": 55,
+    "🧊 Lipton": 50,
 }
 
 all_menu = {**bread_menu, **local_bakes_menu, **coffee_menu, **drinks_menu}
@@ -1110,6 +1110,23 @@ st.markdown(
     to {{ opacity: 1; transform: translateY(0); }}
 }}
 
+@keyframes slideIn {{
+    from {{ opacity: 0; transform: translateX(-20px); }}
+    to {{ opacity: 1; transform: translateX(0); }}
+}}
+
+@keyframes pulse {{
+    0% {{ transform: scale(1); }}
+    50% {{ transform: scale(1.05); }}
+    100% {{ transform: scale(1); }}
+}}
+
+@keyframes glow {{
+    0% {{ box-shadow: 0 0 5px var(--accent); }}
+    50% {{ box-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent); }}
+    100% {{ box-shadow: 0 0 5px var(--accent); }}
+}}
+
 .stApp {{
     animation: fadeIn 0.8s ease-in-out;
     background: {app_background};
@@ -1213,60 +1230,115 @@ p, li, label, span, div {{
     background: linear-gradient(135deg, var(--accent), #ffe1b3);
     color: #2a1a0f;
     border: none;
-    border-radius: 999px;
-    padding: 0.6rem 1.4rem;
+    border-radius: 50px;
+    padding: 0.7rem 1.6rem;
     font-weight: 600;
+    font-size: 0.9rem;
     box-shadow: 0 10px 24px var(--glow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}}
+
+.stButton > button::before {{
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
 }}
 
 .stButton > button:hover {{
-    transform: translateY(-2px);
-    box-shadow: 0 14px 32px var(--glow);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 35px var(--glow);
+}}
+
+.stButton > button:hover::before {{
+    left: 100%;
+}}
+
+.stButton > button:active {{
+    transform: translateY(-1px) scale(0.98);
 }}
 
 .hero-card {{
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
     border: 1px solid {block_border};
-    border-radius: 22px;
-    padding: 1.8rem 2rem;
+    border-radius: 24px;
+    padding: 2rem 2.5rem;
     box-shadow: 0 20px 40px var(--shadow);
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.8s ease;
+}}
+
+.hero-card::before {{
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    animation: glow 3s ease-in-out infinite alternate;
 }}
 
 .hero-eyebrow {{
     text-transform: uppercase;
-    letter-spacing: 0.25em;
+    letter-spacing: 0.3em;
     color: var(--accent);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
 }}
 
 .hero-title {{
-    font-size: 2.4rem;
-    margin: 0.25rem 0 0.6rem 0;
+    font-size: 3rem;
+    margin: 0.5rem 0 0.8rem 0;
+    background: linear-gradient(135deg, var(--title_color), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: slideIn 0.8s ease;
 }}
 
 .hero-subtitle {{
-    font-size: 1rem;
-    max-width: 650px;
+    font-size: 1.1rem;
+    max-width: 700px;
+    line-height: 1.6;
+    opacity: 0.95;
 }}
 
 .hero-badges {{
     display: flex;
-    gap: 0.6rem;
+    gap: 0.8rem;
     flex-wrap: wrap;
-    margin-top: 1.1rem;
+    margin-top: 1.4rem;
 }}
 
 .hero-badge {{
     background: var(--accent-soft);
     color: {title_color};
-    padding: 0.35rem 0.8rem;
-    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     border: 1px solid {block_border};
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}}
+
+.hero-badge:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px var(--glow);
+    background: var(--accent);
+    color: #2a1a0f;
 }}
 
 .home-image {{
@@ -1371,45 +1443,60 @@ p, li, label, span, div {{
 }}
 
 .menu-card {{
-    background: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
     border: 1px solid {block_border};
-    border-radius: 16px;
-    padding: 0.9rem 1rem;
+    border-radius: 18px;
+    padding: 1rem 1.2rem;
     box-shadow: 0 12px 30px var(--shadow);
     position: relative;
     overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: all 0.3s ease;
+    animation: slideIn 0.5s ease;
 }}
 
 .menu-card::before {{
-    content: "";
+    content: '';
     position: absolute;
     inset: -1px;
-    background: radial-gradient(circle at top left, var(--accent-soft), transparent 65%);
-    opacity: 0.9;
+    background: radial-gradient(circle at top left, var(--accent-soft), transparent 70%);
+    opacity: 0.8;
+    border-radius: inherit;
 }}
 
 .menu-card:hover {{
-    transform: translateY(-4px);
+    transform: translateY(-6px) scale(1.02);
     border-color: var(--accent);
-    box-shadow: 0 18px 36px var(--shadow);
+    box-shadow: 0 20px 40px var(--shadow), 0 0 20px var(--glow);
 }}
 
-.menu-name {{
+.menu-card .menu-name {{
     position: relative;
     font-weight: 600;
-    margin-bottom: 0.35rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }}
 
-.menu-price {{
+.menu-card .menu-price {{
     position: relative;
     color: var(--accent);
-    font-weight: 600;
-    display: inline-block;
+    font-weight: 700;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
     background: var(--accent-soft);
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
     border: 1px solid {block_border};
+    transition: all 0.3s ease;
+}}
+
+.menu-card:hover .menu-price {{
+    background: var(--accent);
+    color: #2a1a0f;
+    animation: pulse 1s infinite;
 }}
 
 .menu-list {{
