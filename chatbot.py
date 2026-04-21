@@ -298,16 +298,16 @@ OPENAI_MAX_HISTORY = int(os.getenv("OPENAI_MAX_HISTORY", "12"))
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0.7"))
 
 # ------------------------------------------------
-# MENU DATA
+# MENU DATA WITH PRICING & STOCK
 # ------------------------------------------------
 menu_items = {
-    "🥐 Croissant":120,
-    "🍞 Baguette":100,
-    "🥖 Brioche":150,
-    "🥯 Pain au Chocolat":140,
-    "☕ Espresso":90,
-    "☕ Latte":130,
-    "☕ Cappuccino":120
+    "🥐 Croissant": 120,
+    "🍞 Baguette": 100,
+    "🥖 Brioche": 150,
+    "🥯 Pain au Chocolat": 140,
+    "☕ Espresso": 90,
+    "☕ Latte": 130,
+    "☕ Cappuccino": 120
 }
 
 menu_items.update({
@@ -319,6 +319,63 @@ menu_items.update({
     "Macchiato": 115,
     "Flat White": 125,
 })
+
+# Stock Status System (Real-time inventory)
+STOCK_STATUS = {
+    "🥐 Croissant": {"stock": 45, "status": "In Stock"},
+    "🍞 Baguette": {"stock": 32, "status": "In Stock"},
+    "🥖 Brioche": {"stock": 28, "status": "In Stock"},
+    "🥯 Pain au Chocolat": {"stock": 15, "status": "Low Stock"},
+    "Fougasse": {"stock": 22, "status": "In Stock"},
+    "Sourdough": {"stock": 18, "status": "In Stock"},
+    "Danish": {"stock": 8, "status": "Low Stock"},
+    "☕ Espresso": {"stock": 999, "status": "Available"},
+    "☕ Latte": {"stock": 999, "status": "Available"},
+    "☕ Cappuccino": {"stock": 999, "status": "Available"},
+    "Americano": {"stock": 999, "status": "Available"},
+    "Mocha": {"stock": 999, "status": "Available"},
+    "Macchiato": {"stock": 999, "status": "Available"},
+    "Flat White": {"stock": 999, "status": "Available"},
+}
+
+# Best Pairings Database with Descriptions
+BEST_PAIRINGS = {
+    "🥐 Croissant": {
+        "drink": "☕ Latte",
+        "reason": "The buttery, flaky croissant pairs perfectly with smooth, creamy latte for a balanced breakfast.",
+        "persona": "Classic Morning Enthusiast"
+    },
+    "🥖 Brioche": {
+        "drink": "☕ Cappuccino",
+        "reason": "Rich, sweet brioche complements the bold espresso and velvety foam of cappuccino beautifully.",
+        "persona": "Coffee Lover's Choice"
+    },
+    "🥯 Pain au Chocolat": {
+        "drink": "☕ Mocha",
+        "reason": "Chocolate pastry with chocolate coffee - a match made in heaven for sweet mornings.",
+        "persona": "Chocolate Devotee"
+    },
+    "🍞 Baguette": {
+        "drink": "☕ Americano",
+        "reason": "Crispy, artisan bread pairs wonderfully with strong, straightforward americano.",
+        "persona": "Purist's Pick"
+    },
+    "Sourdough": {
+        "drink": "☕ Flat White",
+        "reason": "Tangy sourdough balances perfectly with smooth, velvety flat white espresso.",
+        "persona": "Artisan Appreciator"
+    },
+    "Danish": {
+        "drink": "☕ Macchiato",
+        "reason": "Light pastry with layered coffee flavors - an elegant afternoon combination.",
+        "persona": "Afternoon Sipper"
+    },
+    "Fougasse": {
+        "drink": "☕ Espresso",
+        "reason": "Herbaceous, savory bread with bold espresso - a sophisticated pairing.",
+        "persona": "Flavor Explorer"
+    },
+}
 
 # ------------------------------------------------
 # SESSION STATE
@@ -504,6 +561,149 @@ with col1:
             st.session_state.pending_recipe_prompt = f"Give me a recipe for {ingredients_input.strip()}."
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+# ------------------------------------------------
+# ENHANCED FEATURES: PRICE CHECK, STOCK, PAIRINGS, ORDER GUIDANCE
+# ------------------------------------------------
+def _get_price_check(item_query: str) -> str:
+    """Return detailed price information"""
+    item_query = item_query.lower().strip()
+    
+    # Find matching item
+    matching_items = []
+    for item, price in menu_items.items():
+        if item_query in item.lower() or any(word in item.lower() for word in item_query.split()):
+            matching_items.append((item, price))
+    
+    if not matching_items:
+        return random.choice([
+            "I didn't find that item. Try asking about: Croissant, Baguette, Brioche, Coffee, Latte, Cappuccino, etc.",
+            "That item isn't on our menu. What else can I help you with?",
+            "Let me know the specific item and I'll check the price for you!"
+        ])
+    
+    if len(matching_items) == 1:
+        item, price = matching_items[0]
+        return f"💰 **{item}** costs **PHP {price}**. Fresh and delicious!"
+    
+    # Multiple matches
+    response = "📋 **Price Check Results:**\n"
+    for item, price in matching_items[:5]:
+        response += f"- {item}: **PHP {price}**\n"
+    return response
+
+
+def _get_stock_status(item_query: str) -> str:
+    """Return real-time stock information"""
+    item_query = item_query.lower().strip()
+    
+    matching_items = []
+    for item in STOCK_STATUS.keys():
+        if item_query in item.lower() or any(word in item.lower() for word in item_query.split()):
+            matching_items.append(item)
+    
+    if not matching_items:
+        return "I couldn't find that item. Try asking about: Croissant, Latte, Brioche, etc."
+    
+    if len(matching_items) == 1:
+        item = matching_items[0]
+        stock_info = STOCK_STATUS[item]
+        status = stock_info["status"]
+        stock = stock_info["stock"]
+        
+        if "Low Stock" in status:
+            emoji = "⚠️"
+        elif "Available" in status:
+            emoji = "✅"
+        else:
+            emoji = "📦"
+        
+        return f"{emoji} **{item}** - {status}\n📊 Available: {stock} units"
+    
+    # Multiple matches
+    response = "📦 **Stock Status Check:**\n"
+    for item in matching_items[:5]:
+        stock_info = STOCK_STATUS[item]
+        status = stock_info["status"]
+        stock = stock_info["stock"]
+        emoji = "⚠️" if "Low" in status else "✅"
+        response += f"{emoji} {item}: {status} ({stock} units)\n"
+    return response
+
+
+def _get_best_pairing(item_query: str) -> str:
+    """Return best pairing suggestions with persona descriptions"""
+    item_query = item_query.lower().strip()
+    
+    matching_pairs = []
+    for item, pairing_info in BEST_PAIRINGS.items():
+        if item_query in item.lower() or any(word in item.lower() for word in item_query.split()):
+            matching_pairs.append((item, pairing_info))
+    
+    if not matching_pairs:
+        # Random suggestion if no specific match
+        item, pairing_info = random.choice(list(BEST_PAIRINGS.items()))
+        return f"✨ **Best Pairing Suggestion:**\n\n{item} + {pairing_info['drink']}\n\n💭 _{pairing_info['reason']}_\n\n🎯 Perfect for: **{pairing_info['persona']}**"
+    
+    item, pairing_info = matching_pairs[0]
+    return f"""✨ **Best Pairing for {item}:**
+
+🥐 **{item}** + ☕ **{pairing_info['drink']}**
+
+💭 _{pairing_info['reason']}_
+
+🎯 Perfect for: **{pairing_info['persona']}**
+
+Want to order this combo?"""
+
+
+def _get_order_guidance() -> str:
+    """Guide users through the ordering process"""
+    personas = [
+        {
+            "name": "☀️ Morning Enthusiast",
+            "recommendation": "Croissant + Latte - Start your day right!",
+            "description": "For those who love a balanced, smooth breakfast combo"
+        },
+        {
+            "name": "💪 Energy Booster",
+            "recommendation": "Espresso + Pain au Chocolat - Quick energy hit!",
+            "description": "For busy mornings when you need a quick boost"
+        },
+        {
+            "name": "🎨 Flavor Explorer",
+            "recommendation": "Sourdough + Flat White - Artisan experience!",
+            "description": "For those who appreciate complex flavors and craftsmanship"
+        },
+        {
+            "name": "🍫 Sweet Tooth",
+            "recommendation": "Danish + Mocha - Chocolate heaven!",
+            "description": "For afternoon treats and sweet cravings"
+        },
+        {
+            "name": "🌙 Evening Sipper",
+            "recommendation": "Fougasse + Macchiato - Sophisticated choice!",
+            "description": "For late afternoon or evening indulgence"
+        }
+    ]
+    
+    persona = random.choice(personas)
+    return f"""🛍️ **Order Guidance - Find Your Perfect Match!**
+
+**{persona['name']}**
+→ {persona['recommendation']}
+
+_{persona['description']}_
+
+**Steps to Order:**
+1. Choose your item from the menu
+2. Check our stock status
+3. Add to cart with quantity
+4. Choose payment method (GCash, Maya, or Cash)
+5. Proceed to checkout - get PHP 300 signup bonus! 💳
+
+Which combo sounds good to you?"""
+
 
 # ------------------------------------------------
 # DOUGHBOT AI ENGINE
@@ -793,12 +993,15 @@ def _primary_doughbot_ai(prompt):
 
     greetings = ["hello", "hi", "hey", "good morning", "good evening", "good afternoon"]
     thanks = ["thanks", "thank you", "appreciate", "ty"]
-    recommend = ["recommend", "suggest", "best", "favorite", "fave"]
+    recommend = ["recommend", "suggest", "best", "favorite", "fave", "best pairing"]
     coffee = ["coffee", "espresso", "latte", "cappuccino", "americano", "mocha", "macchiato", "flat white"]
     bread = ["bread", "croissant", "baguette", "brioche", "sourdough", "danish", "fougasse"]
     delivery = ["delivery", "deliver", "shipping"]
     branch = ["branch", "branches", "location", "store", "stores", "where are you", "where located"]
-    price = ["price", "cost", "how much", "rates"]
+    price = ["price", "cost", "how much", "rates", "pricing", "price check"]
+    stock = ["stock", "available", "in stock", "out of stock", "availability", "inventory"]
+    pairing = ["pairing", "pair", "goes with", "combo", "together", "with"]
+    order = ["order", "how to order", "ordering", "checkout", "purchase", "buy"]
     signup = ["signup", "sign up", "register", "registration", "welcome bonus", "signup bonus", "free 300", "p300"]
     payment = ["payment", "gcash", "maya", "otp", "cash"]
     weather = ["weather", "rain", "sunny", "cloudy", "temperature", "hot", "cold"]
@@ -821,156 +1024,170 @@ def _primary_doughbot_ai(prompt):
     price_min = min(menu_items.values())
     price_max = max(menu_items.values())
 
+    # ✅ PRICE CHECK HANDLER
+    if any(x in text for x in price):
+        for item in menu_items.keys():
+            if item.lower() in text:
+                return _get_price_check(item)
+        return _get_price_check(text)
+
+    # ✅ STOCK STATUS HANDLER
+    if any(x in text for x in stock):
+        for item in STOCK_STATUS.keys():
+            if item.lower() in text:
+                return _get_stock_status(item)
+        return _get_stock_status(text)
+
+    # ✅ BEST PAIRINGS HANDLER
+    if any(x in text for x in pairing):
+        for item in BEST_PAIRINGS.keys():
+            if item.lower() in text:
+                return _get_best_pairing(item)
+        return _get_best_pairing(text)
+
+    # ✅ ORDER GUIDANCE HANDLER
+    if any(x in text for x in order):
+        return _get_order_guidance()
+
     if any(x in text for x in greetings):
-        return [
-            "Hello! I'm DoughBot. Want bread, coffee, or a combo today?",
-            "Hi there. I can recommend items or answer menu questions.",
-            "Welcome to Pan de Staku. What are you in the mood for?",
-            "Hey! I'm here to chat about anything - bakery or general topics!"
-        ]
+        return random.choice([
+            "Hello! I'm DoughBot 🥐 Ask about prices, stock, pairings, or orders!",
+            "Hi there! Welcome to Pan de Staku. How can I help you today?",
+            "Hey! DoughBot here. Ready to help with bakery questions!",
+            "Bonjour! Ask me about our menu, prices, stock status, or orders!"
+        ])
 
     if any(x in text for x in recommend):
-        return [
-            f"My pick: {combo[0]} with {combo[1]}. Balanced and popular.",
-            f"Try {combo[0]} + {combo[1]}. Great for mornings.",
-            "If you want something rich, go Brioche with Cappuccino.",
-            "For a lighter start, Croissant with Latte is a solid choice.",
-            "For general recommendations, tell me the category!"
-        ]
+        return random.choice([
+            f"My top recommendation: {combo[0]} with {combo[1]}! A perfect balance.",
+            f"Try {combo[0]} paired with {combo[1]} - it's our classic combo!",
+            "Tell me which bread or coffee you like and I'll recommend the perfect match!"
+        ])
 
     if any(x in text for x in coffee):
-        return [
-            "Coffee options: Espresso, Americano, Cappuccino, Latte, Mocha, Macchiato, Flat White.",
-            "Want something strong? Espresso or Americano. Prefer smooth? Latte or Flat White.",
-            "Cappuccino pairs nicely with Brioche. Mocha pairs well with Pain au Chocolat.",
-            "Coffee is amazing! What type are you in the mood for?"
-        ]
+        return random.choice([
+            "☕ Options: Espresso (₱90), Americano (₱100), Cappuccino (₱120), Latte (₱130), Mocha (₱140), Macchiato (₱115), Flat White (₱125)",
+            "7 amazing coffee drinks! Want to know the best pairing for each?",
+            "Strong or smooth? Espresso is bold, Latte is creamy. What's your preference?"
+        ])
 
     if any(x in text for x in bread):
-        return [
-            "Breads: Croissant, Baguette, Brioche, Pain au Chocolat, Fougasse, Sourdough, Danish.",
-            "Looking for a classic? Croissant and Baguette are favorites.",
-            "If you want something hearty, Sourdough is a great pick.",
-            "Fresh bread is the best! Which type interests you?"
-        ]
-
-    if any(x in text for x in price):
-        return [
-            f"Our items range between PHP {price_min} and PHP {price_max}.",
-            "Tell me the item and I can give the exact price.",
-            "Prices vary, but everything is good value for quality!"
-        ]
+        return random.choice([
+            "🥐 Breads: Croissant (₱120), Baguette (₱100), Brioche (₱150), Pain au Chocolat (₱140), Fougasse (₱130), Sourdough (₱160), Danish (₱135)",
+            "Fresh baked daily! Classic French breads and local favorites.",
+            "Buttery, hearty, or sweet? I can recommend what you'll love!"
+        ])
 
     if any(x in text for x in delivery):
-        return [
-            "Yes, delivery is available. Fees depend on distance.",
-            "We can deliver locally. Share your area and I will estimate.",
-            "Delivery makes everything convenient!"
-        ]
+        return random.choice([
+            "✅ We deliver locally! ₱40 delivery fee. Which branch are you near?",
+            "Delivery available to nearby areas! Share your location and I'll confirm.",
+            "Making orders convenient! Local delivery available."
+        ])
 
     if any(x in text for x in branch):
-        return [
-            f"Our branches are in {BRANCH_LIST_TEXT}.",
-            f"You can visit us in {BRANCH_LIST_TEXT}.",
-            "We have branches all over! Which one are you near?"
-        ]
+        return random.choice([
+            f"📍 We're in: {BRANCH_LIST_TEXT}",
+            f"Visit us at: {BRANCH_LIST_TEXT}",
+            "Which area are you in? We likely have a branch near you!"
+        ])
 
     if any(x in text for x in thanks):
-        return [
-            "You're welcome. Want another suggestion?",
-            "Happy to help. Ask me anytime.",
-            "Anytime. I can recommend a combo if you want.",
-            "Glad to assist! What's next on your mind?"
-        ]
+        return random.choice([
+            "You're welcome! Need anything else? 🥐",
+            "Happy to help! Any other questions?",
+            "Anytime! Ready to order?",
+            "Glad I could assist. What else can I help with?"
+        ])
 
     if any(x in text for x in signup):
-        return [
-            f"New customers get PHP {SIGNUP_BONUS} wallet credit after registering.",
-            f"Signup bonus: PHP {SIGNUP_BONUS} credit added to your wallet right after registration.",
-            "Register an account and the bonus applies automatically at checkout.",
-            "Joining is easy and comes with bonus credit!"
-        ]
+        return random.choice([
+            f"🎁 New customers get PHP {SIGNUP_BONUS} wallet credit after registering!",
+            f"Register now and get PHP {SIGNUP_BONUS} free credit instantly!",
+            "Join us and enjoy PHP 300 welcome bonus on your first order!"
+        ])
 
     if any(x in text for x in payment):
-        return [
-            "Payment options: GCash, Maya, and Cash.",
-            "GCash/Maya need your mobile number and OTP. Cash only needs your mobile number.",
-            "Multiple payment methods for your convenience!"
-        ]
+        return random.choice([
+            "💳 Payment: GCash, Maya (need mobile + OTP), or 💰 Cash (mobile number only)",
+            "Multiple payment options for your convenience!",
+            "Flexible payment! Choose what works best."
+        ])
 
     if any(x in text for x in weather):
-        return [
-            "I can't check current weather, but I hope it's pleasant!",
-            "Weather can be tricky. Stay comfortable out there.",
-            "For weather updates, try a weather app. Meanwhile, enjoy some coffee!"
-        ]
+        return random.choice([
+            "☕ Rainy days are perfect for warm coffee and pastries!",
+            "☀️ We're open rain or shine!",
+            "For weather, check your app. For pan de staku, we're always ready! 🥐"
+        ])
 
     if any(x in text for x in time):
         from datetime import datetime
         now = datetime.now()
-        return [
-            f"It's currently {now.strftime('%I:%M %p')} here.",
-            f"Right now: {now.strftime('%A, %B %d, %Y')}.",
-            "Time management is key! What's your schedule like?"
-        ]
+        return random.choice([
+            f"⏰ It's {now.strftime('%I:%M %p')} - perfect time for coffee and pastry! ☕",
+            f"Today: {now.strftime('%A, %B %d, %Y')}",
+            "Perfect timing for something delicious!"
+        ])
 
     if any(x in text for x in jokes):
-        return [
-            "Why did the baker go to therapy? Too many loaf issues! 🥖",
+        jokes_list = [
+            "Why did the baker go to therapy? Too many loaf issues! 🥖😄",
             "What do you call fake noodles? An impasta! 🍝",
             "Why don't eggs tell jokes? They'd crack each other up! 🥚",
-            "Coffee joke: You mocha me very happy! ☕"
+            "Coffee joke: You mocha me very happy! ☕💕"
         ]
+        return random.choice(jokes_list)
 
     if any(x in text for x in help_topics):
-        return [
-            "I can help with bakery menu, prices, recommendations, recipes, and general conversation!",
-            "From bread pairings to cooking tips, weather chat to jokes - I'm here for it all!",
-            "Menu questions, food advice, general knowledge, entertainment - ask away!"
-        ]
+        return random.choice([
+            "I can help with: 💰 Prices, 📦 Stock, 🥐 Pairings, 🛍️ Orders!",
+            "Ask about: menu items, prices, stock, pairings, or how to order!",
+            "I'm your bakery expert! Need prices, stock, pairings, or order help?"
+        ])
 
     if any(x in text for x in food_general):
-        return [
-            "Food is amazing! Want a recipe? Just give me ingredients or a dish name.",
-            "Cooking is fun! What are you craving?",
-            "I love food talk! Recipes, tips, pairings - let's discuss!"
-        ]
+        return random.choice([
+            "Love food? Ask for recipes! Or let me suggest a pairing with our menu.",
+            "Food is amazing! Want a recipe, menu tip, or pairing?",
+            "Cooking fan? Share ingredients and I'll create a recipe!"
+        ])
 
     if any(x in text for x in entertainment):
-        return [
-            "Entertainment is great! What's your favorite movie/music/book?",
-            "I enjoy discussing pop culture. What's your latest obsession?",
-            "Movies, music, games, books - what's entertaining you lately?"
-        ]
+        return random.choice([
+            "Entertainment is great! What's your favorite movie, music, or book?",
+            "Movies, music, games - what's entertaining you lately?",
+            "Love discussing pop culture! What's your latest obsession?"
+        ])
 
     if any(x in text for x in tech):
-        return [
-            "Tech is fascinating! From apps to AI, what's your interest?",
-            "I run on technology! What tech topic do you want to explore?",
-            "Digital world is amazing. What's your tech question?"
-        ]
+        return random.choice([
+            "Tech is fascinating! What topic interests you?",
+            "I'm built on tech! What's your tech question?",
+            "Digital world is amazing. What do you want to explore?"
+        ])
 
     if any(x in text for x in health):
-        return [
-            "Health is important! Eat well, stay active, rest properly.",
-            "Fitness and wellness matter. What's your health goal?",
-            "Healthy living includes good food and regular exercise!"
-        ]
+        return random.choice([
+            "Health matters! Good food & exercise help. Enjoy our treats in moderation! 😊",
+            "Wellness is important! Balance is key.",
+            "Treat yourself sometimes! 🥐"
+        ])
 
     if "menu" in text:
-        return [
-            f"Our menu includes: {menu_list}.",
-            "We serve artisan breads and coffee. Ask about any item.",
-            "Fresh baked goods and great coffee - that's our menu!"
-        ]
+        return random.choice([
+            f"**Our Menu:** {menu_list}",
+            "Fresh breads and quality coffee - that's us!",
+            "Full menu above! Any specific item you're interested in?"
+        ])
 
-    return [
-        "Tell me what you are craving and I will suggest a combo.",
-        "Ask about menu items, prices, or pairings, and I will help.",
-        "If you want a recipe, say: Give me a recipe for chicken, garlic, onion.",
-        "I'm here for any conversation! What's on your mind?",
-        "From bakery tips to general chat - I'm all ears!"
-    ]
+    return random.choice([
+        "Tell me what you need - prices, stock, pairings, or orders?",
+        "Ask about our menu, prices, pairings, or how to order. I'm here!",
+        "What can I help with? Try prices, stock, or best pairings!",
+        "Any bakery questions or order guidance needed?",
+        "From prices to pairings to ordering - I've got you covered! 🥐"
+    ])
 
 
 def _parse_ingredients(text: str) -> list[str]:

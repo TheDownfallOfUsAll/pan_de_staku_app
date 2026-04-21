@@ -711,6 +711,27 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         except:
             return 50
 
+    canonical_names = set(item_aliases.values())
+
+    def normalize_menu_name(name: str) -> str:
+        normalized = " ".join(name.split()).strip()
+        if normalized in canonical_names:
+            return normalized
+        if " " in normalized:
+            stripped_prefix = normalized.split(" ", 1)[1].strip()
+            if stripped_prefix in canonical_names:
+                return stripped_prefix
+        return normalized
+
+    chat_menu = {}
+    for menu_name, menu_price in all_menu.items():
+        chat_menu[normalize_menu_name(menu_name)] = menu_price
+
+    drink_names = {normalize_menu_name(item_name) for item_name in drinks_menu}
+
+    def get_price(item_name: str) -> int | None:
+        return chat_menu.get(normalize_menu_name(item_name))
+
     if not p:
         return signed_reply("fallback", "Ask me about menu items, prices, pairings, stock, or order steps.")
 
@@ -813,7 +834,10 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
 
     if matches(compare_words) and len(mentioned_items) >= 2:
         a, b = mentioned_items[0], mentioned_items[1]
-        pa, pb = all_menu[a], all_menu[b]
+        pa = get_price(a)
+        pb = get_price(b)
+        if pa is None or pb is None:
+            return signed_reply("compare", "I can compare items from our menu. Tell me two item names and I will check.")
         diff = abs(pa - pb)
         if pa == pb:
             msg = f"{a} and {b} are both PHP {pa}. Choose by taste preference."
@@ -847,15 +871,27 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
     if requested and (matches(order_words) or explicit_qty or "total" in words or "estimate" in words):
         lines = []
         total = 0
+        skipped_items = []
         for item, qty in requested.items():
-            subtotal = all_menu[item] * qty
+            price = get_price(item)
+            if price is None:
+                skipped_items.append(item)
+                continue
+            subtotal = price * qty
             lines.append(f"- {item} x{qty}: PHP {subtotal}")
             total += subtotal
-        return signed_reply(
-            "order_estimate",
+        if not lines:
+            return signed_reply("order_estimate", "I could not price those items yet. Please try with menu item names.")
+        message = (
             "Estimated order total:\n"
             + "\n".join(lines)
-            + f"\nTotal estimate: PHP {total}\n\nTo complete: login -> Order page -> add items -> Cart -> payment.",
+            + f"\nTotal estimate: PHP {total}\n\nTo complete: login -> Order page -> add items -> Cart -> payment."
+        )
+        if skipped_items:
+            message += "\n\nI could not price: " + ", ".join(skipped_items) + "."
+        return signed_reply(
+            "order_estimate",
+            message,
         )
 
     if matches(recommend_words) or matches(breakfast_words) or words.intersection(hunger_words) or words.intersection(caffeine_words):
@@ -873,7 +909,13 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
             return signed_reply("recommend", "Need energy? Espresso or Americano are strong, or try a Latte for balance.")
         if matches(breakfast_words):
             return signed_reply("recommend", "Breakfast pick: Croissant with Latte. It is balanced, light, and popular in the morning.")
-        budget_picks = [pick for pick in picks if all_menu[pick.split(" with ")[0]] + all_menu[pick.split(" with ")[1]] <= 270]
+        budget_picks = []
+        for pick in picks:
+            first_item, second_item = pick.split(" with ")
+            first_price = get_price(first_item)
+            second_price = get_price(second_item)
+            if first_price is not None and second_price is not None and first_price + second_price <= 270:
+                budget_picks.append(pick)
         if matches(budget_words) and budget_picks:
             return signed_reply("recommend", f"Budget-friendly combo: {random.choice(budget_picks)}.")
         return signed_reply("recommend", f"My recommendation: {random.choice(picks)}.")
@@ -884,17 +926,21 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         if budget is not None:
             combos = []
             for bread, coffee in pairings.items():
-                total = all_menu[bread] + all_menu[coffee]
+                bread_price = get_price(bread)
+                coffee_price = get_price(coffee)
+                if bread_price is None or coffee_price is None:
+                    continue
+                total = bread_price + coffee_price
                 if total <= budget:
                     combos.append(f"{bread} with {coffee} (PHP {total})")
-            singles = [f"{item} (PHP {price})" for item, price in all_menu.items() if price <= budget]
+            singles = [f"{item} (PHP {price})" for item, price in chat_menu.items() if price <= budget]
             if combos:
                 return signed_reply("price", "Combos within budget:\n" + "\n".join(combos[:4]))
             if singles:
                 return signed_reply("price", "Items within budget:\n" + ", ".join(singles[:6]))
-            cheapest_item = min(all_menu, key=all_menu.get)
-            return signed_reply("price", f"Cheapest item is {cheapest_item} at PHP {all_menu[cheapest_item]}.")
-        sorted_items = sorted(all_menu.items(), key=lambda x: x[1])
+            cheapest_item = min(chat_menu, key=chat_menu.get)
+            return signed_reply("price", f"Cheapest item is {cheapest_item} at PHP {chat_menu[cheapest_item]}.")
+        sorted_items = sorted(chat_menu.items(), key=lambda x: x[1])
         cheapest = ", ".join([f"{item} (PHP {price})" for item, price in sorted_items[:3]])
         premium = ", ".join([f"{item} (PHP {price})" for item, price in sorted_items[-3:]])
         if {"expensive", "pricey"}.intersection(words):
@@ -907,16 +953,16 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
 
     how_much = "how much" in p
     if detected_item and (matches(price_words) or how_much):
-        price = all_menu.get(detected_item)
+        price = get_price(detected_item)
         if price is not None:
             return signed_reply("price", f"{detected_item} is PHP {price}.")
 
     if matches(price_words) or how_much:
-        min_item = min(all_menu, key=all_menu.get)
-        max_item = max(all_menu, key=all_menu.get)
+        min_item = min(chat_menu, key=chat_menu.get)
+        max_item = max(chat_menu, key=chat_menu.get)
         return signed_reply(
             "price",
-            f"Prices range from PHP {all_menu[min_item]} ({min_item}) to PHP {all_menu[max_item]} ({max_item}).",
+            f"Prices range from PHP {chat_menu[min_item]} ({min_item}) to PHP {chat_menu[max_item]} ({max_item}).",
         )
 
     if matches(delivery_words):
@@ -967,11 +1013,11 @@ def doughbot_response(prompt: str, conn: sqlite3.Connection = None) -> str:
         return signed_reply("support", "Sorry about the trouble. Tell me the branch, item, and what happened so I can help.")
 
     if detected_item:
-        if detected_item in drinks_menu:
+        if detected_item in drink_names:
             paired = "a fresh bread of your choice"
         else:
             paired = pairings.get(detected_item, "a coffee of your choice")
-        price = all_menu.get(detected_item)
+        price = get_price(detected_item)
         stock = get_stock_safe(detected_item)
         if price is not None:
             stock_note = "in stock" if stock > 0 else "currently unavailable"
