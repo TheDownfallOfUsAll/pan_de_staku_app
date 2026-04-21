@@ -1,5 +1,5 @@
 ﻿# 🥐 Pan de Staku - Enterprise Bakery & Coffee Management System with AI Chatbot 🤖
-**Version:** 1.7.0 (April 20, 2026)
+**Version:** 1.7.1 (April 21, 2026)
 
 **Pan de Staku** is a **French-inspired bakery and coffee management system** built with **Streamlit** ☕.  
 It delivers a **complete digital bakery platform** with customer ordering, analytics, branch control, and an AI-style assistant.
@@ -21,7 +21,14 @@ It simulates a **modern smart bakery platform** capable of handling:
 
 ---
 
-## 🆕 Recent Updates (April 20, 2026)
+## 🆕 Recent Updates (April 21, 2026)
+
+- 🛠 **DoughBot Crash Fix**: Resolved `KeyError: 'Croissant'` in recommendation flow by adding safe menu-price lookups for canonical item names
+- 🔄 **Item Name Normalization**: DoughBot now normalizes menu names before pricing logic, preventing mismatches between emoji-labeled menu keys and chat item names
+- 🧾 **Safer Price Logic**: Improved compare, budget combo, order estimate, and item-price responses to handle missing item mappings without crashing
+- ✅ **Chat Stability Upgrade**: Recommendation and budget filtering now skip invalid items gracefully instead of throwing runtime errors
+
+## 🗂 Previous Updates (April 20, 2026)
 
 - ✨ **Major UI Design Overhaul**: Added modern animations (fadeIn, slideIn, pulse, glow), enhanced button effects with shimmer animations, improved hover states, and upgraded visual hierarchy across all pages
 - 🎨 **Menu Enhancements**: Added emoji icons to all menu items (🥐, 🍞, ☕, etc.) for better visual appeal and user experience
